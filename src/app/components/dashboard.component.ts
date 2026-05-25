@@ -6,6 +6,7 @@ import { HeroSummaryComponent } from './hero-summary.component';
 import { MealBlockComponent } from './meal-block.component';
 import { RecentFoodsComponent } from './recent-foods.component';
 import { WaterTrackerComponent } from './water-tracker.component';
+import { GoalProgressComponent } from './goal-progress.component';
 import { FoodSearchComponent } from './food-search.component';
 import { AuthService } from '../services/auth.service';
 import { Router } from '@angular/router';

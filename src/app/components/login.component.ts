@@ -95,7 +95,7 @@ export class LoginComponent implements OnInit {
     if (typeof google === 'undefined' || !google.accounts) return;
 
     google.accounts.id.initialize({
-      client_id: 'TU_CLIENTE_ID_DE_GOOGLE.apps.googleusercontent.com', 
+      client_id: '96118425924-fia28il69d3ng7m7o3at72led0oisd7b.apps.googleusercontent.com', 
       callback: this.handleCredentialResponse.bind(this)
     });
 
