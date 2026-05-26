@@ -41,10 +41,11 @@ export class NetworkStatusService {
       const response = await fetch('https://www.gstatic.com/generate_204', {
         method: 'GET',
         cache: 'no-store',
+        mode: 'no-cors',
         signal: AbortSignal.timeout(3000)
       });
       
-      if (response.status === 204 || response.ok) {
+      if (response.type === 'opaque' || response.status === 204 || response.ok) {
         this.isOnline.set(true);
       } else {
         this.isOnline.set(false);
