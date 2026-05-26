@@ -7,20 +7,18 @@ import { Entry, EntryDocument } from './schemas/entry.schema';
 export class EntriesService {
   constructor(@InjectModel(Entry.name) private entryModel: Model<EntryDocument>) {}
 
-  async saveEntry(date: string, meals: any[], waterGlasses: number) {
-    // Para simplificar, buscamos por fecha en string directo si queremos (pero el esquema usa Date)
-    // Asumimos que date viene como "YYYY-MM-DD"
+  async saveEntry(userId: string, date: string, meals: any[], waterGlasses: number) {
     const parsedDate = new Date(date + 'T00:00:00.000Z');
     
     return this.entryModel.findOneAndUpdate(
-      { date: parsedDate }, // Filtro (sin user por ahora)
-      { meals, waterGlasses, date: parsedDate }, // Actualización
+      { date: parsedDate, user: userId },
+      { meals, waterGlasses, date: parsedDate, user: userId },
       { upsert: true, new: true }
     );
   }
 
-  async getEntry(date: string) {
+  async getEntry(userId: string, date: string) {
     const parsedDate = new Date(date + 'T00:00:00.000Z');
-    return this.entryModel.findOne({ date: parsedDate });
+    return this.entryModel.findOne({ date: parsedDate, user: userId });
   }
 }

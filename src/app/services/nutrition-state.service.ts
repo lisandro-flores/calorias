@@ -1,4 +1,5 @@
 import { Injectable, signal, computed, effect, inject } from '@angular/core';
+import { AuthService } from './auth.service';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../environments/environment';
 
@@ -183,8 +184,11 @@ export class NutritionStateService {
 
   // ─── Persistence effects ───
   private http = inject(HttpClient);
+  private authService = inject(AuthService);
 
   constructor() {
+    this.pullFromMongo();
+
     effect(() => {
       const m = this.meals();
       localStorage.setItem(`meals_${this.todayKey}`, JSON.stringify(m));
@@ -205,8 +209,12 @@ export class NutritionStateService {
   }
 
   private syncToMongo() {
+    const user = this.authService.currentUser();
+    if (!user || user.id === 'offline_mode') return;
+
     // Sincroniza el día de hoy con la base de datos
     this.http.post(`${environment.apiUrl}/entries/sync`, {
+      userId: user.id,
       date: this.todayKey,
       meals: this.meals(),
       waterGlasses: this.waterGlasses()
@@ -214,6 +222,28 @@ export class NutritionStateService {
       next: () => console.log(' Sincronizado con MongoDB'),
       error: (err) => console.error('❌ Error sincronizando con MongoDB', err)
     });
+  }
+
+  private pullFromMongo() {
+    const user = this.authService.currentUser();
+    if (!user || user.id === 'offline_mode') return;
+
+    this.http.get<any>(`${environment.apiUrl}/entries/day?date=${this.todayKey}&userId=${user.id}`)
+      .subscribe({
+        next: (res) => {
+          if (res.success && res.data) {
+            if (res.data.meals && res.data.meals.length > 0) {
+               // Evita emitir múltiples veces o sobrescribir incondicionalmente
+               // a menos que venga diferente, por ahora forzamos actualización local
+               this.meals.set(res.data.meals);
+            }
+            if (res.data.waterGlasses !== undefined) {
+               this.waterGlasses.set(res.data.waterGlasses);
+            }
+          }
+        },
+        error: (err) => console.error('Error al recuperar datos de Mongo', err)
+      });
   }
 
   // ─── Profile update ───
