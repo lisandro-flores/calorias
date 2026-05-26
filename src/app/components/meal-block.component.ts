@@ -13,7 +13,7 @@ import { FoodItem } from '../services/nutrition-state.service';
         <div>
           <ion-card-title>{{ mealName }}</ion-card-title>
           <ion-card-subtitle>
-            {{ mealCalories() }} kcal • P: {{ mealProtein() }}g • C: {{ mealCarbs() }}g • G: {{ mealFats() }}g
+            Total: {{ mealCalories() }} kcal
           </ion-card-subtitle>
         </div>
         <ion-button fill="outline" size="small" color="primary" (click)="onCopyYesterday()">
@@ -56,9 +56,6 @@ export class MealBlockComponent {
   @Output() copyYesterday = new EventEmitter<void>();
 
   mealCalories() { return this.foods.reduce((acc, f) => acc + f.calories, 0); }
-  mealProtein() { return this.foods.reduce((acc, f) => acc + f.protein, 0); }
-  mealCarbs() { return this.foods.reduce((acc, f) => acc + f.carbs, 0); }
-  mealFats() { return this.foods.reduce((acc, f) => acc + f.fats, 0); }
 
   onCopyYesterday() {
     this.copyYesterday.emit();

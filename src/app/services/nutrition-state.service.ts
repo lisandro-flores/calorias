@@ -6,9 +6,6 @@ export interface FoodItem {
   emoji: string;
   portion: string;
   calories: number;
-  protein: number;
-  carbs: number;
-  fats: number;
 }
 
 export interface Meal {
@@ -22,9 +19,6 @@ export interface Meal {
 export class NutritionStateService {
   // Metas estáticas
   readonly calorieGoal = 1450;
-  readonly proteinGoal = 115;
-  readonly carbsGoal = 130;
-  readonly fatsGoal = 45;
 
   // Estado centralizado con Signals
   meals = signal<Meal[]>([
@@ -39,21 +33,6 @@ export class NutritionStateService {
   totalCalories = computed(() => {
     return this.meals().reduce((acc, meal) => 
       acc + meal.foods.reduce((sum, food) => sum + food.calories, 0), 0);
-  });
-
-  totalProtein = computed(() => {
-    return this.meals().reduce((acc, meal) => 
-      acc + meal.foods.reduce((sum, food) => sum + food.protein, 0), 0);
-  });
-
-  totalCarbs = computed(() => {
-    return this.meals().reduce((acc, meal) => 
-      acc + meal.foods.reduce((sum, food) => sum + food.carbs, 0), 0);
-  });
-
-  totalFats = computed(() => {
-    return this.meals().reduce((acc, meal) => 
-      acc + meal.foods.reduce((sum, food) => sum + food.fats, 0), 0);
   });
 
   // Acciones (Reducers)
@@ -72,10 +51,7 @@ export class NutritionStateService {
       name: 'Huevo Revuelto',
       emoji: '🍳',
       portion: '150 g',
-      calories: 220,
-      protein: 18,
-      carbs: 2,
-      fats: 15
+      calories: 220
     };
 
     this.meals.update(meals => meals.map(meal => {

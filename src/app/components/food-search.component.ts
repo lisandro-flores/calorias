@@ -40,7 +40,7 @@ import { NutritionStateService } from '../services/nutrition-state.service';
             <ion-label>
               <h2>{{ product.product_name || 'Desconocido' }}</h2>
               <p>Por 100g: 
-                {{ product.nutriments['energy-kcal_100g'] | number:'1.0-0' }} kcal |
+                {{ product.nutriments['energy-kcal_100g'] | number:'1.0-0' }} kcalal |
                 P: {{ product.nutriments['proteins_100g'] | number:'1.0-1' }}g
               </p>
             </ion-label>
@@ -119,10 +119,7 @@ export class FoodSearchComponent implements OnDestroy {
               name: product.product_name,
               emoji: '📦', 
               portion: '100 g',
-              calories: Math.round(kcal),
-              protein: Math.round(product.nutriments['proteins_100g'] || 0),
-              carbs: Math.round(product.nutriments['carbohydrates_100g'] || 0),
-              fats: Math.round(product.nutriments['fat_100g'] || 0)
+              calories: Math.round(kcal)
             }]
           };
         }

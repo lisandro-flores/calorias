@@ -1,4 +1,5 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, signal, inject } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
 
 export interface UserProfile {
   id: string; // ID en MongoDB
@@ -12,38 +13,43 @@ export interface UserProfile {
   providedIn: 'root'
 })
 export class AuthService {
+  private http = inject(HttpClient);
+
   // Estado global reactivo para el usuario
   currentUser = signal<UserProfile | null>(null);
 
   /**
    * Recibe el token JWT de Google tras un login exitoso.
-   * Lo envía al backend Node.js/MongoDB para validar y recuperar al usuario local.
+   * Lo envía al backend Node.js (NestJS) para validar y encontrar a MongoUser.
    */
   async loginWithGoogleToken(googleJwt: string) {
-    /* 
-     * [MOCK] Lógica real que enviarías a tu backend conectado a MongoDB:
-     * 
-     * const response = await fetch('https://api.tu-backend.com/auth/google', {
-     *   method: 'POST',
-     *   headers: { 'Content-Type': 'application/json' },
-     *   body: JSON.stringify({ token: googleJwt })
-     * });
-     * const mongoUser = await response.json();
-     */
-    
-    // Decodificación de prueba (solo del payload JWT base64)
-    const payloadInfo = this.decodeJwt(googleJwt);
-    
-    const mockMongoUser: UserProfile = {
-      id: 'mongo_64fb1c8...',
-      email: payloadInfo.email,
-      name: payloadInfo.name,
-      picture: payloadInfo.picture,
-      token: googleJwt
-    };
-
-    this.currentUser.set(mockMongoUser);
-    return mockMongoUser;
+    try {
+      const response = await fetch('http://localhost:3000/auth/google', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: googleJwt })
+      });
+      
+      if (!response.ok) throw new Error('Backend rechazó el token');
+      
+      const mongoUser: UserProfile = await response.json();
+      this.currentUser.set(mongoUser);
+      return mongoUser;
+      
+    } catch (e) {
+      console.error("Error en validación NestJS:", e);
+      // Fallback local por si el server de BD se apaga
+      const payloadInfo = this.decodeJwt(googleJwt);
+      const mockUser = {
+        id: 'offline_mode',
+        email: payloadInfo.email,
+        name: payloadInfo.name,
+        picture: payloadInfo.picture,
+        token: googleJwt
+      };
+      this.currentUser.set(mockUser);
+      return mockUser;
+    }
   }
 
   logout() {
