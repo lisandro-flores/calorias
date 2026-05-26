@@ -2,6 +2,7 @@ import { Injectable, signal, computed, effect, inject } from '@angular/core';
 import { AuthService } from './auth.service';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../environments/environment';
+import { ToastController } from '@ionic/angular';
 
 export interface FoodItem {
   id: string;
@@ -30,20 +31,16 @@ export type Gender = 'male' | 'female';
 export type ActivityLevel = 'sedentary' | 'light' | 'moderate' | 'active' | 'very_active';
 
 export interface UserProfile {
-  // Personal
   displayName: string;
   age: number;
   gender: Gender;
   heightCm: number;
-  // Weight
   startWeight: number;
   currentWeight: number;
   goalWeight: number;
-  // Activity
   activityLevel: ActivityLevel;
-  // Overrides (manual)
-  calorieGoalOverride: number | null; // null = auto from TDEE
-  proteinGoalOverride: number | null; // null = auto (0.8g per lb lean mass estimate)
+  calorieGoalOverride: number | null;
+  proteinGoalOverride: number | null;
   waterGoal: number;
 }
 
@@ -118,27 +115,23 @@ export class NutritionStateService {
     return Math.round(this.bmr() * mult);
   });
 
-  // ─── Goals (use override if set, else auto) ───
   calorieGoal = computed(() => {
     const p = this.userProfile();
     if (p.calorieGoalOverride !== null) return p.calorieGoalOverride;
-    // Default: moderate deficit if goal < current, surplus if goal > current
     const diff = p.currentWeight - p.goalWeight;
-    if (diff > 1) return Math.round(this.tdee() - 400); // déficit
-    if (diff < -1) return Math.round(this.tdee() + 300); // superávit
-    return this.tdee(); // mantenimiento
+    if (diff > 1) return Math.round(this.tdee() - 400);
+    if (diff < -1) return Math.round(this.tdee() + 300);
+    return this.tdee();
   });
 
   proteinGoal = computed(() => {
     const p = this.userProfile();
     if (p.proteinGoalOverride !== null) return p.proteinGoalOverride;
-    // ~1.8g per kg bodyweight for active people
     return Math.round(p.currentWeight * 1.8);
   });
 
   waterGoal = computed(() => this.userProfile().waterGoal);
 
-  // Legacy compatibility getter (used by other components)
   goals = computed<UserGoals>(() => ({
     calorieGoal: this.calorieGoal(),
     proteinGoal: this.proteinGoal(),
@@ -148,7 +141,6 @@ export class NutritionStateService {
     goalWeight: this.userProfile().goalWeight,
   }));
 
-  // ─── Daily totals ───
   totalCalories = computed(() =>
     this.meals().reduce((acc, meal) =>
       acc + meal.foods.reduce((sum, f) => sum + f.calories, 0), 0)
@@ -171,20 +163,20 @@ export class NutritionStateService {
 
   remaining = computed(() => this.calorieGoal() - this.totalCalories());
 
-  // ─── Projected weekly weight loss/gain (based on deficit) ───
-  // 7700 kcal ≈ 1 kg de grasa
   weeklyWeightChangePrediction = computed(() => {
     const weekHistory = this.getLast7Days().filter(d => d.calories > 0);
     if (weekHistory.length === 0) return null;
     const avgCals = weekHistory.reduce((s, d) => s + d.calories, 0) / weekHistory.length;
     const dailyDeficit = this.tdee() - avgCals;
     const weeklyKg = (dailyDeficit * 7) / 7700;
-    return weeklyKg; // positive = losing weight, negative = gaining
+    return weeklyKg;
   });
 
   // ─── Persistence effects ───
   private http = inject(HttpClient);
   private authService = inject(AuthService);
+  private toastCtrl = inject(ToastController);
+  private syncTimeout: any;
 
   constructor() {
     this.pullFromMongo();
@@ -212,16 +204,31 @@ export class NutritionStateService {
     const user = this.authService.currentUser();
     if (!user || user.id === 'offline_mode') return;
 
-    // Sincroniza el día de hoy con la base de datos
-    this.http.post(`${environment.apiUrl}/entries/sync`, {
-      userId: user.id,
-      date: this.todayKey,
-      meals: this.meals(),
-      waterGlasses: this.waterGlasses()
-    }).subscribe({
-      next: () => console.log(' Sincronizado con MongoDB'),
-      error: (err) => console.error('❌ Error sincronizando con MongoDB', err)
-    });
+    if (this.syncTimeout) {
+      clearTimeout(this.syncTimeout);
+    }
+
+    this.syncTimeout = setTimeout(() => {
+      this.http.post(`${environment.apiUrl}/entries/sync`, {
+        userId: user.id,
+        date: this.todayKey,
+        meals: this.meals(),
+        waterGlasses: this.waterGlasses()
+      }).subscribe({
+        next: async () => {
+          console.log('Sincronizado con MongoDB');
+          const toast = await this.toastCtrl.create({
+            message: 'Respaldado en la nube',
+            duration: 1500,
+            position: 'bottom',
+            color: 'dark',
+            icon: 'cloud-done-outline'
+          });
+          toast.present();
+        },
+        error: (err) => console.error('Error sincronizando con MongoDB', err)
+      });
+    }, 2500);
   }
 
   private pullFromMongo() {
@@ -233,12 +240,10 @@ export class NutritionStateService {
         next: (res) => {
           if (res.success && res.data) {
             if (res.data.meals && res.data.meals.length > 0) {
-               // Evita emitir múltiples veces o sobrescribir incondicionalmente
-               // a menos que venga diferente, por ahora forzamos actualización local
-               this.meals.set(res.data.meals);
+              this.meals.set(res.data.meals);
             }
             if (res.data.waterGlasses !== undefined) {
-               this.waterGlasses.set(res.data.waterGlasses);
+              this.waterGlasses.set(res.data.waterGlasses);
             }
           }
         },
@@ -246,12 +251,10 @@ export class NutritionStateService {
       });
   }
 
-  // ─── Profile update ───
   updateProfile(partial: Partial<UserProfile>) {
     this.userProfile.update(p => ({ ...p, ...partial }));
   }
 
-  /** Legacy compat: update goals as before */
   updateGoals(partial: Partial<UserGoals>) {
     this.userProfile.update(p => {
       const updated: Partial<UserProfile> = {};
@@ -265,7 +268,6 @@ export class NutritionStateService {
     });
   }
 
-  // ─── Food actions ───
   addFoodToMeal(mealName: string, food: FoodItem) {
     this.meals.update(meals => meals.map(meal => {
       if (meal.name === mealName) {
@@ -299,11 +301,9 @@ export class NutritionStateService {
     this.addFoodToMeal(mealName, food);
   }
 
-  // ─── Water actions ───
   addWater() { this.waterGlasses.update(v => v + 1); }
   removeWater() { this.waterGlasses.update(v => Math.max(0, v - 1)); }
 
-  // ─── Recent foods ───
   private addToRecent(food: FoodItem) {
     this.recentFoods.update(list => {
       const filtered = list.filter(f => f.name !== food.name);
@@ -311,7 +311,6 @@ export class NutritionStateService {
     });
   }
 
-  // ─── Copy from yesterday ───
   copyFromYesterday(mealName: string) {
     const yesterday = new Date();
     yesterday.setDate(yesterday.getDate() - 1);
@@ -337,7 +336,6 @@ export class NutritionStateService {
     }
   }
 
-  // ─── History ───
   private saveTodayToHistory() {
     const todayLog: DayLog = {
       date: this.todayKey,
@@ -361,7 +359,7 @@ export class NutritionStateService {
   getDeficitForDate(date: string): number {
     const cals = this.getCaloriesForDate(date);
     if (cals === 0) return 0;
-    return this.tdee() - cals; // positive = deficit, negative = surplus
+    return this.tdee() - cals;
   }
 
   getLast7Days(): { date: string; calories: number; label: string; deficit: number }[] {
@@ -382,13 +380,11 @@ export class NutritionStateService {
     return days;
   }
 
-  // ─── Reset today ───
   resetToday() {
     this.meals.set(DEFAULT_MEALS.map(m => ({ ...m, foods: [] })));
     this.waterGlasses.set(0);
   }
 
-  // ─── Helpers ───
   private getDateKey(date: Date): string {
     return date.toISOString().split('T')[0];
   }
@@ -411,10 +407,8 @@ export class NutritionStateService {
 
   private loadProfile(): UserProfile {
     try {
-      // Try new format first
       const stored = localStorage.getItem('user_profile');
       if (stored) return JSON.parse(stored);
-      // Migrate from old user_goals format
       const oldGoals = localStorage.getItem('user_goals');
       if (oldGoals) {
         const g = JSON.parse(oldGoals);

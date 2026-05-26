@@ -31,10 +31,12 @@ export class FoodItem {
   fat: number;
 }
 
-@Schema({ timestamps: true })
+@Schema({ timestamps: true, collection: 'registro' })
 export class Entry {
-  @Prop({ type: Types.ObjectId, ref: 'User', required: false }) // TODO: Require true once Auth is done
-  user: User | Types.ObjectId;
+    @Prop({ type: String, required: false })
+  user: string;
+//  true once Auth is done
+  
 
   // Fecha exacto truncada a 00:00:00 (ej: 2026-05-25)
   @Prop({ required: true })

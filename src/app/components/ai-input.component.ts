@@ -418,7 +418,8 @@ export class AiInputComponent {
   async confirmAll() {
     const meals = this.nutritionState.meals();
     const buttons = meals.map(meal => ({
-      text: `${meal.icon} ${meal.name}`,
+      text: meal.name,
+      icon: meal.icon,
       handler: () => {
         const foods = this.results();
         foods.forEach(food => {
