@@ -25,7 +25,7 @@ import { scan, bulb, leaf, arrowForward } from 'ionicons/icons';
           <div class="hero-brand" style="--delay: 0.2s">
             <div class="brand-icon-wrapper">
               <div class="brand-icon-glow"></div>
-              <span class="brand-icon">🔥</span>
+              <ion-icon class="brand-icon" name="flame"></ion-icon>
             </div>
             <h1 class="title">Fuel<span>Smart</span></h1>
             <p class="tagline">La IA que transforma tu nutrición.</p>

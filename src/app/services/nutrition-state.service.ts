@@ -78,10 +78,10 @@ const DEFAULT_PROFILE: UserProfile = {
 };
 
 const DEFAULT_MEALS: Meal[] = [
-  { name: 'Desayuno', icon: '🌅', foods: [] },
-  { name: 'Comida', icon: '☀️', foods: [] },
-  { name: 'Cena', icon: '🌙', foods: [] },
-  { name: 'Snacks', icon: '🍿', foods: [] },
+  { name: 'Desayuno', icon: 'partly-sunny-outline', foods: [] },
+  { name: 'Comida', icon: 'sunny-outline', foods: [] },
+  { name: 'Cena', icon: 'moon-outline', foods: [] },
+  { name: 'Snacks', icon: 'fast-food-outline', foods: [] },
 ];
 
 @Injectable({
@@ -211,7 +211,7 @@ export class NutritionStateService {
       meals: this.meals(),
       waterGlasses: this.waterGlasses()
     }).subscribe({
-      next: () => console.log('✅ Sincronizado con MongoDB'),
+      next: () => console.log(' Sincronizado con MongoDB'),
       error: (err) => console.error('❌ Error sincronizando con MongoDB', err)
     });
   }
@@ -259,7 +259,7 @@ export class NutritionStateService {
     const food: FoodItem = {
       id: Date.now().toString() + Math.random().toString(36).substr(2, 4),
       name,
-      emoji: '🍽️',
+      emoji: 'restaurant-outline',
       portion: `${calories} kcal`,
       calories: Math.round(calories),
       protein: Math.round(protein),

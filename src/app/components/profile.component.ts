@@ -134,10 +134,10 @@ import { NutritionStateService, ActivityLevel } from '../services/nutrition-stat
           </div>
         </div>
         <div class="auto-hint" *ngIf="draft.calorieGoalOverride === null">
-          ✨ Calculado automáticamente desde tu TDEE
+          <ion-icon name="sparkles"></ion-icon> Calculado automáticamente desde tu TDEE
         </div>
         <button class="reset-auto-btn" *ngIf="draft.calorieGoalOverride !== null" (click)="resetCalAuto()">
-          ✨ Restablecer a automático ({{ state.calorieGoal() }} kcal)
+          <ion-icon name="sparkles"></ion-icon> Restablecer a automático ({{ state.calorieGoal() }} kcal)
         </button>
 
         <div class="form-row">
@@ -152,7 +152,7 @@ import { NutritionStateService, ActivityLevel } from '../services/nutrition-stat
           </div>
         </div>
         <div class="auto-hint" *ngIf="draft.proteinGoalOverride === null">
-          ✨ {{ state.userProfile().currentWeight }}kg × 1.8g/kg = {{ state.proteinGoal() }}g auto
+          <ion-icon name="sparkles"></ion-icon> {{ state.userProfile().currentWeight }}kg × 1.8g/kg = {{ state.proteinGoal() }}g auto
         </div>
 
         <div class="form-row">
@@ -322,7 +322,7 @@ export class ProfileComponent {
     clearTimeout(this.toastTimeout);
     this.toastTimeout = setTimeout(async () => {
       const toast = await this.toastCtrl.create({
-        message: '✅ Perfil guardado',
+        message: 'Perfil guardado',
         duration: 1200,
         position: 'top',
         color: 'dark',

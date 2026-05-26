@@ -13,7 +13,7 @@ import { NutritionStateService } from '../services/nutrition-state.service';
     <div class="ai-wrapper">
       <!-- Collapsed trigger -->
       <button class="ai-trigger" (click)="toggle()" [class.active]="isOpen()">
-        <span class="ai-icon">✨</span>
+        <ion-icon class="ai-icon" name="sparkles"></ion-icon>
         <span class="ai-label">Registrar con IA</span>
         <ion-icon [name]="isOpen() ? 'chevron-up' : 'chevron-down'" class="ai-chevron"></ion-icon>
       </button>
@@ -38,7 +38,7 @@ import { NutritionStateService } from '../services/nutrition-state.service';
         </div>
 
         <button class="ai-send-btn" (click)="sendToAI()" [disabled]="isLoading() || !userText.trim()">
-          <span *ngIf="!isLoading()">✨ Analizar</span>
+          <span *ngIf="!isLoading()"><ion-icon name="sparkles"></ion-icon> Analizar</span>
           <span *ngIf="isLoading()" class="loading-dots">
             Analizando<span class="dot">.</span><span class="dot">.</span><span class="dot">.</span>
           </span>
@@ -49,7 +49,7 @@ import { NutritionStateService } from '../services/nutrition-state.service';
           <div class="results-title">{{ results().length }} alimento{{ results().length > 1 ? 's' : '' }} detectado{{ results().length > 1 ? 's' : '' }}</div>
 
           <div class="result-item" *ngFor="let food of results()">
-            <span class="result-emoji">{{ food.emoji }}</span>
+            <ion-icon class="result-emoji" name="restaurant-outline"></ion-icon>
             <div class="result-info">
               <span class="result-name">{{ food.name }}</span>
               <span class="result-detail">{{ food.portion }} · {{ food.calories }} kcal · P: {{ food.protein }}g</span>
@@ -71,7 +71,7 @@ import { NutritionStateService } from '../services/nutrition-state.service';
 
         <!-- Missing API Key Warning -->
         <div class="api-key-warning" *ngIf="isMissingApiKey()">
-          <div class="api-key-title">Falta configurar la IA 🤖</div>
+          <div class="api-key-title">Falta configurar la IA <ion-icon name="alert-circle"></ion-icon></div>
           <p>Para usar esta función, necesitas tu API Key de Gemini.</p>
           <ol>
             <li>Consigue una gratis en <a href="https://aistudio.google.com/apikey" target="_blank">aistudio.google.com</a></li>
@@ -401,7 +401,7 @@ export class AiInputComponent {
           this.isMissingApiKey.set(true);
         } else if (backendMsg === 'RATE_LIMIT_EXCEEDED') {
           this.errorMsg.set(
-            '⚠️ Has superado el límite de peticiones de Gemini (Free Tier). Intenta de nuevo en unos segundos.'
+            'Has superado el límite de peticiones de Gemini (Free Tier). Intenta de nuevo en unos segundos.'
           );
         } else {
           this.errorMsg.set(
@@ -450,7 +450,7 @@ export class AiInputComponent {
 
   async showSuccessToast(count: number, mealName: string) {
     const toast = await this.toastCtrl.create({
-      message: `✅ ${count} alimento${count > 1 ? 's' : ''} agregado${count > 1 ? 's' : ''} a ${mealName}`,
+      message: `${count} alimento${count > 1 ? 's' : ''} agregado${count > 1 ? 's' : ''} a ${mealName}`,
       duration: 2500,
       position: 'top',
       color: 'dark',

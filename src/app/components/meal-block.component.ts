@@ -13,7 +13,7 @@ import { FoodItem, NutritionStateService } from '../services/nutrition-state.ser
       <!-- Meal Header -->
       <div class="meal-header" (click)="expanded = !expanded">
         <div class="meal-title-row">
-          <span class="meal-icon">{{ mealIcon }}</span>
+          <ion-icon class="meal-icon" [name]="mealIcon"></ion-icon>
           <span class="meal-name">{{ mealName }}</span>
           <span class="meal-cals">{{ mealCalories() }} kcal</span>
         </div>
@@ -177,7 +177,7 @@ import { FoodItem, NutritionStateService } from '../services/nutrition-state.ser
 })
 export class MealBlockComponent {
   @Input({ required: true }) mealName!: string;
-  @Input() mealIcon: string = '🍽️';
+  @Input() mealIcon: string = 'restaurant-outline';
   @Input({ required: true }) foods!: FoodItem[];
   @Output() copyYesterday = new EventEmitter<void>();
 

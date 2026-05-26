@@ -7,7 +7,9 @@ import {
   remove, add, water, logOutOutline, addCircle,
   fitnessOutline, closeCircle, chevronDown, chevronUp,
   chevronForward, copyOutline, searchOutline,
-  cameraOutline, bulbOutline
+  cameraOutline, bulbOutline, partlySunnyOutline, 
+  sunnyOutline, moonOutline, fastFoodOutline, restaurantOutline,
+  sparkles, alertCircle, checkmarkCircle, trendingUp, trendingDown, flame, flag
 } from 'ionicons/icons';
 
 @Component({
@@ -80,6 +82,18 @@ export class TabsComponent {
       'search-outline': searchOutline,
       'camera-outline': cameraOutline,
       'bulb-outline': bulbOutline,
+      'partly-sunny-outline': partlySunnyOutline,
+      'sunny-outline': sunnyOutline,
+      'moon-outline': moonOutline,
+      'fast-food-outline': fastFoodOutline,
+      'restaurant-outline': restaurantOutline,
+      'sparkles': sparkles,
+      'alert-circle': alertCircle,
+      'checkmark-circle': checkmarkCircle,
+      'trending-up': trendingUp,
+      'trending-down': trendingDown,
+      'flame': flame,
+      'flag': flag,
     });
   }
 }

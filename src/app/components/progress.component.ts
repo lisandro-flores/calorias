@@ -45,7 +45,7 @@ import { NutritionStateService } from '../services/nutrition-state.service';
 
       <!-- Weekly Prediction from AI context -->
       <div class="prediction-card" *ngIf="state.weeklyWeightChangePrediction() !== null">
-        <div class="prediction-icon">{{ state.weeklyWeightChangePrediction()! > 0 ? '📉' : '📈' }}</div>
+        <ion-icon class="prediction-icon" [name]="state.weeklyWeightChangePrediction()! > 0 ? 'trending-down' : 'trending-up'"></ion-icon>
         <div class="prediction-text">
           <span class="prediction-title">
             {{ state.weeklyWeightChangePrediction()! > 0 ? 'Bajando' : 'Subiendo' }}
@@ -127,7 +127,7 @@ import { NutritionStateService } from '../services/nutrition-state.service';
 
       <!-- Streak -->
       <div class="streak-card" *ngIf="streak() > 0">
-        <span class="streak-fire">🔥</span>
+        <ion-icon class="streak-fire" name="flame"></ion-icon>
         <div class="streak-text">
           <span class="streak-count">{{ streak() }} días</span>
           <span class="streak-label">racha registrando</span>

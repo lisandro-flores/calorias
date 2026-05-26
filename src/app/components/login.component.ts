@@ -15,7 +15,7 @@ declare var google: any;
       <div class="login-container">
         <!-- Brand -->
         <div class="brand">
-          <div class="brand-icon">🔥</div>
+          <ion-icon class="brand-icon" name="flame"></ion-icon>
           <h1>Calorías</h1>
           <p class="tagline">Tu contador minimalista</p>
         </div>

@@ -23,7 +23,8 @@ import { NutritionStateService } from '../services/nutrition-state.service';
       </div>
 
       <ion-button expand="block" shape="round" class="analyze-btn" (click)="getAdvice()" [disabled]="isLoading()">
-        {{ isLoading() ? 'Analizando...' : 'Analizar Mi Día ✨' }}
+        <span *ngIf="isLoading()">Analizando...</span>
+        <span *ngIf="!isLoading()">Analizar Mi Día <ion-icon name="sparkles"></ion-icon></span>
       </ion-button>
 
       <div class="advice-card" *ngIf="advice()">

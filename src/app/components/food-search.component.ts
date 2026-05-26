@@ -368,7 +368,7 @@ export class FoodSearchComponent implements OnDestroy {
 
   async showToast(name: string, grams: number) {
     const toast = await this.toastCtrl.create({
-      message: `✅ ${name} (${grams}g) agregado`,
+      message: `${name} (${grams}g) agregado`,
       duration: 2000,
       position: 'top',
       color: 'dark',

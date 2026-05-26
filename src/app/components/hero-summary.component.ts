@@ -51,8 +51,8 @@ import { NutritionStateService } from '../services/nutrition-state.service';
 
       <!-- Deficit indicator -->
       <div class="deficit-indicator" [class.over]="isOver()">
-        <span *ngIf="!isOver()">🎯 {{ state.remaining() | number:'1.0-0' }} restantes · TDEE {{ state.tdee() | number:'1.0-0' }}</span>
-        <span *ngIf="isOver()">⚠️ Pasaste la meta por {{ -state.remaining() | number:'1.0-0' }} kcal</span>
+        <span *ngIf="!isOver()"><ion-icon name="flag"></ion-icon> {{ state.remaining() | number:'1.0-0' }} restantes · TDEE {{ state.tdee() | number:'1.0-0' }}</span>
+        <span *ngIf="isOver()"><ion-icon name="alert-circle"></ion-icon> Pasaste la meta por {{ -state.remaining() | number:'1.0-0' }} kcal</span>
       </div>
 
       <!-- Macro Bars -->
