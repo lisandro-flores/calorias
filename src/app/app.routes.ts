@@ -16,6 +16,14 @@ export const routes: Routes = [
         loadComponent: () => import('./components/dashboard.component').then(m => m.DashboardComponent),
       },
       {
+        path: 'camera',
+        loadComponent: () => import('./components/camera.component').then(m => m.CameraComponent),
+      },
+      {
+        path: 'coach',
+        loadComponent: () => import('./components/coach.component').then(m => m.CoachComponent),
+      },
+      {
         path: 'progress',
         loadComponent: () => import('./components/progress.component').then(m => m.ProgressComponent),
       },
@@ -31,8 +39,12 @@ export const routes: Routes = [
     ]
   },
   {
+    path: 'landing',
+    loadComponent: () => import('./components/landing.component').then(m => m.LandingComponent),
+  },
+  {
     path: '',
-    redirectTo: 'login',
+    redirectTo: 'landing',
     pathMatch: 'full',
   },
 ];

@@ -1,17 +1,23 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { IonicModule } from '@ionic/angular';
+import { IonTabs, IonTabBar, IonTabButton, IonIcon, IonLabel } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
-import { homeOutline, barChartOutline, personOutline, remove, add, water, logOutOutline, addCircle, fitnessOutline } from 'ionicons/icons';
+import {
+  homeOutline, barChartOutline, personOutline,
+  remove, add, water, logOutOutline, addCircle,
+  fitnessOutline, closeCircle, chevronDown, chevronUp,
+  chevronForward, copyOutline, searchOutline,
+  cameraOutline, bulbOutline
+} from 'ionicons/icons';
 
 @Component({
   selector: 'app-tabs',
   standalone: true,
-  imports: [CommonModule, IonicModule],
+  imports: [CommonModule, IonTabs, IonTabBar, IonTabButton, IonIcon, IonLabel],
   template: `
     <ion-tabs>
-      <ion-tab-bar slot="bottom" color="dark">
-        
+      <ion-tab-bar slot="bottom">
+
         <ion-tab-button tab="dashboard" href="/tabs/dashboard">
           <ion-icon name="home-outline"></ion-icon>
           <ion-label>Hoy</ion-label>
@@ -22,6 +28,16 @@ import { homeOutline, barChartOutline, personOutline, remove, add, water, logOut
           <ion-label>Progreso</ion-label>
         </ion-tab-button>
 
+        <ion-tab-button tab="camera" href="/tabs/camera">
+          <ion-icon name="camera-outline"></ion-icon>
+          <ion-label>Cámara</ion-label>
+        </ion-tab-button>
+
+        <ion-tab-button tab="coach" href="/tabs/coach">
+          <ion-icon name="bulb-outline"></ion-icon>
+          <ion-label>Coach</ion-label>
+        </ion-tab-button>
+
         <ion-tab-button tab="profile" href="/tabs/profile">
           <ion-icon name="person-outline"></ion-icon>
           <ion-label>Perfil</ion-label>
@@ -29,11 +45,23 @@ import { homeOutline, barChartOutline, personOutline, remove, add, water, logOut
 
       </ion-tab-bar>
     </ion-tabs>
-  `
+  `,
+  styles: [`
+    ion-tab-bar {
+      --background: var(--app-surface);
+      --border: 1px solid var(--app-border);
+      border-top: 1px solid var(--app-border);
+      padding-bottom: env(safe-area-inset-bottom, 0px);
+    }
+    ion-tab-button {
+      --color: var(--app-muted);
+      --color-selected: var(--app-accent);
+    }
+  `]
 })
 export class TabsComponent {
   constructor() {
-    // Registramos los íconos necesarios para los tabs y otros componentes
+    // Register all icons used across the app
     addIcons({
       'home-outline': homeOutline,
       'bar-chart-outline': barChartOutline,
@@ -43,7 +71,15 @@ export class TabsComponent {
       'water': water,
       'log-out-outline': logOutOutline,
       'add-circle': addCircle,
-      'fitness-outline': fitnessOutline
+      'fitness-outline': fitnessOutline,
+      'close-circle': closeCircle,
+      'chevron-down': chevronDown,
+      'chevron-up': chevronUp,
+      'chevron-forward': chevronForward,
+      'copy-outline': copyOutline,
+      'search-outline': searchOutline,
+      'camera-outline': cameraOutline,
+      'bulb-outline': bulbOutline,
     });
   }
 }

@@ -1,49 +1,92 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { IonicModule } from '@ionic/angular';
-
-interface RecentFood {
-  name: string;
-  emoji: string;
-  defaultPortion: string;
-  calories: number;
-}
+import { IonicModule, ActionSheetController } from '@ionic/angular';
+import { NutritionStateService, FoodItem } from '../services/nutrition-state.service';
 
 @Component({
   selector: 'app-recent-foods',
   standalone: true,
   imports: [CommonModule, IonicModule],
   template: `
-    <ion-card color="dark">
-      <ion-card-header>
-        <ion-card-title>Ingresados Recientemente</ion-card-title>
-      </ion-card-header>
-      
-      <ion-card-content>
-        <ion-list lines="none" color="dark">
-          <ion-item *ngFor="let food of recentFoods" color="dark" button detail="false">
-            <span slot="start" class="recent-emoji">{{ food.emoji }}</span>
-            <ion-label>
-              <h2>{{ food.name }}</h2>
-              <p>{{ food.defaultPortion }}</p>
-            </ion-label>
-            <div slot="end" class="recent-calories">+ {{ food.calories }} kcal</div>
-          </ion-item>
-        </ion-list>
-      </ion-card-content>
-    </ion-card>
+    <div class="recent-section" *ngIf="state.recentFoods().length > 0">
+      <div class="section-title">Recientes</div>
+      <div class="chips-row">
+        <button class="food-chip" *ngFor="let food of state.recentFoods().slice(0, 8)" (click)="onAddRecent(food)">
+          <span class="chip-name">{{ food.name }}</span>
+          <span class="chip-cals">{{ food.calories }}</span>
+        </button>
+      </div>
+    </div>
   `,
   styles: [`
-    .recent-emoji { font-size: 20px; margin-right: 10px; }
-    .recent-calories { font-size: 13px; color: var(--ion-color-medium); }
+    .recent-section {
+      margin-bottom: 16px;
+    }
+    .section-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--app-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 10px;
+    }
+    .chips-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .food-chip {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--app-surface);
+      border: 1px solid var(--app-border);
+      border-radius: 20px;
+      padding: 6px 12px;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.2s;
+    }
+    .food-chip:active {
+      background: var(--app-surface-2);
+      transform: scale(0.96);
+    }
+    .chip-name {
+      font-size: 12px;
+      color: var(--app-text);
+      max-width: 120px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .chip-cals {
+      font-size: 11px;
+      color: var(--app-accent);
+      font-weight: 600;
+    }
   `]
 })
 export class RecentFoodsComponent {
-  // Diccionario local estático/rápido para evitar llamadas HTTP
-  readonly recentFoods: RecentFood[] = [
-    { name: 'Tortilla de Maíz', emoji: '🌮', defaultPortion: '1 pza (30g)', calories: 52 },
-    { name: 'Leche Entera', emoji: '🥛', defaultPortion: '1 taza (240ml)', calories: 150 },
-    { name: 'Nopal Cocido', emoji: '🌵', defaultPortion: '1 taza (150g)', calories: 22 },
-    { name: 'Pechuga de Pollo', emoji: '🍗', defaultPortion: '100g (asada)', calories: 165 },
-  ];
+  state = inject(NutritionStateService);
+  private actionSheetCtrl = inject(ActionSheetController);
+
+  async onAddRecent(food: FoodItem) {
+    const meals = this.state.meals();
+    const buttons = meals.map(meal => ({
+      text: `${meal.icon} ${meal.name}`,
+      handler: () => {
+        this.state.addFoodToMeal(meal.name, {
+          ...food,
+          id: Date.now().toString() + Math.random().toString(36).substr(2, 4),
+        });
+      }
+    }));
+    buttons.push({ text: 'Cancelar', handler: () => {} } as any);
+
+    const sheet = await this.actionSheetCtrl.create({
+      header: '¿A qué comida agregar?',
+      buttons,
+    });
+    await sheet.present();
+  }
 }

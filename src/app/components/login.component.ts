@@ -11,19 +11,23 @@ declare var google: any;
   standalone: true,
   imports: [CommonModule, IonicModule],
   template: `
-    <ion-content color="dark">
+    <ion-content>
       <div class="login-container">
-        <!-- Logo / Marca -->
+        <!-- Brand -->
         <div class="brand">
-          <ion-icon name="fitness-outline" color="primary" class="logo-icon"></ion-icon>
-          <h1>Macros<span class="highlight">Sync</span></h1>
-          <p>Potenciado por MongoDB</p>
+          <div class="brand-icon">🔥</div>
+          <h1>Calorías</h1>
+          <p class="tagline">Tu contador minimalista</p>
         </div>
 
-        <!-- Botón Nativo de Google Identity Services -->
+        <!-- Auth Section -->
         <div class="auth-section">
-          <p class="subtitle">Comienza tu viaje en un tap</p>
           <div id="googleSignInBtn" class="google-btn"></div>
+
+          <!-- Skip login button for testing / offline use -->
+          <button class="skip-btn" (click)="skipLogin()">
+            Continuar sin cuenta
+          </button>
         </div>
       </div>
     </ion-content>
@@ -35,50 +39,57 @@ declare var google: any;
       justify-content: center;
       align-items: center;
       height: 100%;
-      padding: 20px;
+      padding: 40px 24px;
       text-align: center;
       background: var(--app-bg);
     }
-    
+
     .brand {
       margin-bottom: 60px;
     }
-    .logo-icon {
-      font-size: 80px;
-      margin-bottom: 20px;
+    .brand-icon {
+      font-size: 56px;
+      margin-bottom: 16px;
     }
     h1 {
       font-size: 32px;
       font-weight: 700;
-      margin: 0;
+      color: var(--app-text);
+      margin: 0 0 8px;
+      letter-spacing: -0.5px;
     }
-    .highlight {
-      color: var(--ion-color-primary);
-    }
-    .brand p {
-      color: var(--ion-color-success);
+    .tagline {
       font-size: 14px;
-      letter-spacing: 1px;
+      color: var(--app-muted);
+      margin: 0;
+      letter-spacing: 0.3px;
     }
-    
+
     .auth-section {
       width: 100%;
-      max-width: 320px;
-      background: var(--app-surface);
-      padding: 30px 20px;
-      border-radius: 20px;
-      border: 1px solid var(--app-border);
-      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-    }
-    .subtitle {
-      color: var(--app-muted);
-      margin-top: 0;
-      margin-bottom: 20px;
-      font-size: 14px;
+      max-width: 300px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
     }
     .google-btn {
       display: flex;
       justify-content: center;
+    }
+    .skip-btn {
+      background: none;
+      border: 1px solid var(--app-border);
+      border-radius: 20px;
+      padding: 10px 24px;
+      color: var(--app-muted);
+      font-size: 13px;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .skip-btn:active {
+      background: var(--app-surface);
     }
   `]
 })
@@ -87,6 +98,11 @@ export class LoginComponent implements OnInit {
   private router = inject(Router);
 
   ngOnInit() {
+    // If already logged in, go to dashboard
+    if (this.authService.currentUser()) {
+      this.router.navigate(['/tabs/dashboard']);
+      return;
+    }
     this.renderGoogleButton();
   }
 
@@ -95,7 +111,7 @@ export class LoginComponent implements OnInit {
     if (typeof google === 'undefined' || !google.accounts) return;
 
     google.accounts.id.initialize({
-      client_id: '96118425924-fia28il69d3ng7m7o3at72led0oisd7b.apps.googleusercontent.com', 
+      client_id: '96118425924-fia28il69d3ng7m7o3at72led0oisd7b.apps.googleusercontent.com',
       callback: this.handleCredentialResponse.bind(this)
     });
 
@@ -107,10 +123,20 @@ export class LoginComponent implements OnInit {
 
   async handleCredentialResponse(response: any) {
     if(response.credential) {
-      // 1. Google nos da el JWT. Se lo mandamos a nuestro estado (y en la realidad al backend Mongo)
       await this.authService.loginWithGoogleToken(response.credential);
-      // 2. Redirigimos al Dashboard (por los tabs)
       this.router.navigate(['/tabs/dashboard']);
     }
+  }
+
+  skipLogin() {
+    // Create an offline user so the guard lets us through
+    this.authService.currentUser.set({
+      id: 'local_user',
+      email: '',
+      name: 'Usuario',
+      picture: '',
+      token: '',
+    });
+    this.router.navigate(['/tabs/dashboard']);
   }
 }

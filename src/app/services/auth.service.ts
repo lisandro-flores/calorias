@@ -1,5 +1,7 @@
-import { Injectable, signal, inject } from '@angular/core';
+import { Injectable, signal, inject, effect } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+
+import { environment } from '../../environments/environment';
 
 export interface UserProfile {
   id: string; // ID en MongoDB
@@ -15,8 +17,20 @@ export interface UserProfile {
 export class AuthService {
   private http = inject(HttpClient);
 
-  // Estado global reactivo para el usuario
-  currentUser = signal<UserProfile | null>(null);
+  // Estado global reactivo para el usuario cargando del almacenamiento local si existe
+  currentUser = signal<UserProfile | null>(this.loadStoredUser());
+
+  constructor() {
+    // Sincronizar el estado del usuario con localStorage automáticamente
+    effect(() => {
+      const user = this.currentUser();
+      if (user) {
+        localStorage.setItem('current_user', JSON.stringify(user));
+      } else {
+        localStorage.removeItem('current_user');
+      }
+    });
+  }
 
   /**
    * Recibe el token JWT de Google tras un login exitoso.
@@ -24,7 +38,7 @@ export class AuthService {
    */
   async loginWithGoogleToken(googleJwt: string) {
     try {
-      const response = await fetch('http://localhost:3000/auth/google', {
+      const response = await fetch(`${environment.apiUrl}/auth/google`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ token: googleJwt })
@@ -54,6 +68,15 @@ export class AuthService {
 
   logout() {
     this.currentUser.set(null);
+  }
+
+  private loadStoredUser(): UserProfile | null {
+    try {
+      const stored = localStorage.getItem('current_user');
+      return stored ? JSON.parse(stored) : null;
+    } catch (e) {
+      return null;
+    }
   }
 
   private decodeJwt(token: string) {

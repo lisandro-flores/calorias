@@ -8,75 +8,86 @@ import { RecentFoodsComponent } from './recent-foods.component';
 import { WaterTrackerComponent } from './water-tracker.component';
 import { GoalProgressComponent } from './goal-progress.component';
 import { FoodSearchComponent } from './food-search.component';
-import { AuthService } from '../services/auth.service';
-import { Router } from '@angular/router';
+import { AiInputComponent } from './ai-input.component';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
   imports: [
-    CommonModule, 
+    CommonModule,
     IonicModule,
     HeroSummaryComponent,
     MealBlockComponent,
     RecentFoodsComponent,
     WaterTrackerComponent,
     GoalProgressComponent,
-    FoodSearchComponent
+    FoodSearchComponent,
+    AiInputComponent
   ],
   template: `
     <ion-header class="ion-no-border">
-      <ion-toolbar color="dark">
-        <ion-title>Hoy</ion-title>
+      <ion-toolbar>
+        <ion-title class="page-title">Hoy</ion-title>
       </ion-toolbar>
     </ion-header>
 
-    <ion-content color="dark" class="ion-padding">
-      <!-- 1. Hero Dashboard (Estado Global) -->
+    <ion-content class="ion-padding" [scrollY]="true">
+      <!-- Hero ring + macros -->
       <app-hero-summary></app-hero-summary>
 
-      <!-- Buscador en base de datos libre -->
+      <!-- AI Input -->
+      <app-ai-input></app-ai-input>
+
+      <!-- Food search -->
       <app-food-search></app-food-search>
 
-      <!-- 2. Componentes Modulares de Comida -->
-      <!-- Iteramos reactivamente a través de los Signals que contiene la lista de comidas -->
-      <app-meal-block 
-        *ngFor="let meal of state.meals()" 
+      <!-- Recent foods chips -->
+      <app-recent-foods></app-recent-foods>
+
+      <!-- Meals -->
+      <app-meal-block
+        *ngFor="let meal of state.meals()"
         [mealName]="meal.name"
+        [mealIcon]="meal.icon"
         [foods]="meal.foods"
         (copyYesterday)="onCopyYesterday(meal.name)">
       </app-meal-block>
 
-      <!-- 3. Módulo de Ingresados Recientemente -->
-      <app-recent-foods></app-recent-foods>
-
-      <!-- 4. Tarjetas de Fricción Cero (Agua y Disciplina) -->
+      <!-- Water -->
       <app-water-tracker></app-water-tracker>
+
+      <!-- Weight goal -->
       <app-goal-progress></app-goal-progress>
 
+      <div class="footer-space"></div>
     </ion-content>
   `,
   styles: [`
-    ion-card {
-      animation: rise 480ms ease-out both;
+    .page-title {
+      font-size: 20px;
+      font-weight: 700;
+    }
+    .footer-space {
+      height: 20px;
     }
 
-    ion-card:nth-of-type(2) { animation-delay: 40ms; }
-    ion-card:nth-of-type(3) { animation-delay: 80ms; }
-    ion-card:nth-of-type(4) { animation-delay: 120ms; }
-    ion-card:nth-of-type(5) { animation-delay: 160ms; }
-    ion-card:nth-of-type(6) { animation-delay: 200ms; }
+    /* Staggered card entrance */
+    app-meal-block {
+      display: block;
+      animation: fadeUp 350ms ease-out both;
+    }
+    app-meal-block:nth-of-type(2) { animation-delay: 40ms; }
+    app-meal-block:nth-of-type(3) { animation-delay: 80ms; }
+    app-meal-block:nth-of-type(4) { animation-delay: 120ms; }
 
-    @keyframes rise {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
     }
   `]
 })
 export class DashboardComponent {
   state = inject(NutritionStateService);
-  authService = inject(AuthService);
-  router = inject(Router);
 
   onCopyYesterday(mealName: string) {
     this.state.copyFromYesterday(mealName);
