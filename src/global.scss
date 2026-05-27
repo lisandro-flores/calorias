@@ -36,8 +36,6 @@
 /* @import "@ionic/angular/css/palettes/dark.class.css"; */
 @import '@ionic/angular/css/palettes/dark.system.css';
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-
 /* ─────────────────────────────────
    Design Tokens
    ───────────────────────────────── */
@@ -51,7 +49,7 @@
   --app-muted: #7a8494;
   --app-border: rgba(255, 255, 255, 0.06);
 
-  --ion-font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  --ion-font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
   --ion-color-primary: #f0a844;
   --ion-color-primary-rgb: 240, 168, 68;
   --ion-color-primary-contrast: #111;

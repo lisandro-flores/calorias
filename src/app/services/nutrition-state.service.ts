@@ -200,6 +200,7 @@ export class NutritionStateService {
   private syncTimeout: any;
   private profileSyncTimeout: any;
   private midnightTimeout: ReturnType<typeof setTimeout> | null = null;
+  private refreshInterval: ReturnType<typeof setInterval> | null = null;
   private isSyncing = false;
   private isHydrating = true;
   private initialHydrationStepsRemaining = 3;
@@ -215,6 +216,14 @@ export class NutritionStateService {
     }
 
     this.document.addEventListener('visibilitychange', this.handleVisibilityOrFocusChange);
+
+    this.refreshInterval = setInterval(() => {
+      const user = this.authService.currentUser();
+      if (!user || user.id === 'offline_mode') return;
+      if (this.document.hidden) return;
+      if (this.isHydrating || this.isSyncing || this.syncStatus() === 'pending') return;
+      this.refreshFromServer();
+    }, 20000);
 
     effect(() => {
       const user = this.authService.currentUser();
@@ -427,7 +436,12 @@ export class NutritionStateService {
       .subscribe({
         next: (res) => {
           const data = res?.data ?? res;
-          if (!data) return;
+          if (!data) {
+            if (trackHydration) {
+              this.finishInitialHydrationStep();
+            }
+            return;
+          }
 
           this.isSyncing = true;
           this.userProfile.set({
@@ -474,7 +488,12 @@ export class NutritionStateService {
       .subscribe({
         next: (res) => {
           const entries = res?.data ?? [];
-          if (!Array.isArray(entries)) return;
+          if (!Array.isArray(entries)) {
+            if (trackHydration) {
+              this.finishInitialHydrationStep();
+            }
+            return;
+          }
 
           const mappedHistory: DayLog[] = entries.map((entry: any) => ({
             date: entry.date?.split('T')[0] ?? entry.date,
