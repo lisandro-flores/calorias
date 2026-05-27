@@ -35,7 +35,7 @@ describe('AiController', () => {
           protein: 13,
           carbs: 1,
           fat: 11,
-          emoji: '🍳',
+          icon: 'egg',
         },
       ];
 

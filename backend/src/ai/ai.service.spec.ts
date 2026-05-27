@@ -60,7 +60,7 @@ describe('AiService', () => {
           protein: 13,
           carbs: 1,
           fat: 11,
-          emoji: '🍳',
+          icon: 'egg',
         },
         {
           name: 'Jamón',
@@ -69,7 +69,7 @@ describe('AiService', () => {
           protein: 20,
           carbs: 0,
           fat: 8,
-          emoji: '🍖',
+          icon: 'restaurant',
         },
       ];
 

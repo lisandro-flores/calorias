@@ -8,7 +8,7 @@ export interface ParsedFoodItem {
   protein: number;
   carbs: number;
   fat: number;
-  fat: number;
+ 
   icon: string;
 }
 

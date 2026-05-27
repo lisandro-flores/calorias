@@ -505,7 +505,7 @@ export class AiInputComponent {
       this.nutritionState.addFoodToMeal(mealName, {
         id: Date.now().toString() + Math.random().toString(36).substr(2, 4),
         name: food.name,
-        emoji: food.emoji,
+        icon: food.icon,
         portion: food.portion,
         calories: food.calories,
         protein: food.protein,
