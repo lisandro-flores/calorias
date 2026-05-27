@@ -9,6 +9,8 @@ import { WaterTrackerComponent } from './water-tracker.component';
 import { GoalProgressComponent } from './goal-progress.component';
 import { FoodSearchComponent } from './food-search.component';
 import { AiInputComponent } from './ai-input.component';
+import { ActivityCardComponent } from './activity-card.component';
+import { HealthConnectService } from '../services/health-connect.service';
 
 @Component({
   selector: 'app-dashboard',
@@ -22,7 +24,8 @@ import { AiInputComponent } from './ai-input.component';
     WaterTrackerComponent,
     GoalProgressComponent,
     FoodSearchComponent,
-    AiInputComponent
+    AiInputComponent,
+    ActivityCardComponent
   ],
   template: `
     <ion-content class="ion-padding" [scrollY]="true">
@@ -35,6 +38,9 @@ import { AiInputComponent } from './ai-input.component';
 
       <!-- Hero ring + macros -->
       <app-hero-summary></app-hero-summary>
+
+      <!-- Health Connect activity -->
+      <app-activity-card></app-activity-card>
 
       <!-- AI Input -->
       <app-ai-input></app-ai-input>
@@ -121,9 +127,11 @@ import { AiInputComponent } from './ai-input.component';
 })
 export class DashboardComponent {
   state = inject(NutritionStateService);
+  health = inject(HealthConnectService);
 
   ionViewDidEnter() {
     this.state.checkDateChange();
+    this.health.init();
   }
 
   onCopyYesterday(mealName: string) {

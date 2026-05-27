@@ -5,6 +5,7 @@ import { IonicModule, AlertController, ToastController } from '@ionic/angular';
 import { Router } from '@angular/router';
 import { AuthService } from '../services/auth.service';
 import { NutritionStateService, ActivityLevel } from '../services/nutrition-state.service';
+import { HealthConnectService } from '../services/health-connect.service';
 
 @Component({
   selector: 'app-profile',
@@ -40,6 +41,46 @@ import { NutritionStateService, ActivityLevel } from '../services/nutrition-stat
           </span>
           <span class="tdee-label">Tu meta</span>
         </div>
+      </div>
+
+      <!-- ── Health Connect ── -->
+      <div class="section-label">Health Connect</div>
+      <div class="health-card">
+        <div class="health-row">
+          <div>
+            <div class="health-title">Sincronización</div>
+            <div class="health-sub">{{ health.statusLabel() }}</div>
+          </div>
+          <ion-icon name="fitness-outline" class="health-icon"></ion-icon>
+        </div>
+
+        <div class="health-stats" *ngIf="health.isAvailable()">
+          <div class="health-stat">
+            <span class="health-stat-value">{{ health.todaySummary().steps | number:'1.0-0' }}</span>
+            <span class="health-stat-label">Pasos hoy</span>
+          </div>
+          <div class="health-stat">
+            <span class="health-stat-value">{{ health.todaySummary().caloriesBurned | number:'1.0-0' }}</span>
+            <span class="health-stat-label">Kcal quemadas</span>
+          </div>
+          <div class="health-stat">
+            <span class="health-stat-value">{{ health.weightLabel() }}</span>
+            <span class="health-stat-label">Peso HC</span>
+          </div>
+        </div>
+
+        <div class="health-actions">
+          <button class="health-btn primary" (click)="connectHealth()">
+            {{ health.isAuthorized() ? 'Actualizar' : 'Conectar' }}
+          </button>
+          <button class="health-btn subtle" (click)="refreshHealth()" [disabled]="!health.isAuthorized()">
+            Refrescar
+          </button>
+        </div>
+
+        <button class="health-import-btn" *ngIf="health.todaySummary().weight !== null" (click)="importHealthWeight()">
+          Importar peso detectado
+        </button>
       </div>
 
       <!-- ── Datos Personales ── -->
@@ -212,6 +253,68 @@ import { NutritionStateService, ActivityLevel } from '../services/nutrition-stat
       margin-bottom: 8px; padding-left: 4px;
     }
 
+    .health-card {
+      background: var(--app-surface);
+      border: 1px solid var(--app-border);
+      border-radius: 14px;
+      padding: 14px;
+      margin-bottom: 16px;
+    }
+    .health-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 12px;
+    }
+    .health-title { font-size: 14px; font-weight: 700; color: var(--app-text); }
+    .health-sub { font-size: 12px; color: var(--app-muted); margin-top: 3px; }
+    .health-icon { font-size: 20px; color: var(--app-accent); }
+    .health-stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .health-stat {
+      background: var(--app-surface-2);
+      border: 1px solid var(--app-border);
+      border-radius: 12px;
+      padding: 10px 8px;
+      text-align: center;
+    }
+    .health-stat-value { display: block; font-size: 15px; font-weight: 700; color: var(--app-text); }
+    .health-stat-label { display: block; margin-top: 3px; font-size: 10px; color: var(--app-muted); text-transform: uppercase; }
+    .health-actions { display: flex; gap: 8px; }
+    .health-btn {
+      flex: 1;
+      border: 1px solid var(--app-border);
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 600;
+      background: var(--app-surface-2);
+      color: var(--app-text);
+    }
+    .health-btn.primary {
+      background: var(--app-accent);
+      border-color: var(--app-accent);
+      color: #111;
+    }
+    .health-btn.subtle { color: var(--app-muted); }
+    .health-import-btn {
+      width: 100%;
+      margin-top: 10px;
+      border: 1px solid rgba(94, 234, 212, 0.25);
+      background: rgba(94, 234, 212, 0.08);
+      color: var(--app-accent-2);
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
     /* Form card */
     .form-card {
       background: var(--app-surface); border: 1px solid var(--app-border);
@@ -287,12 +390,17 @@ import { NutritionStateService, ActivityLevel } from '../services/nutrition-stat
 export class ProfileComponent {
   authService = inject(AuthService);
   state = inject(NutritionStateService);
+  health = inject(HealthConnectService);
   private router = inject(Router);
   private alertCtrl = inject(AlertController);
   private toastCtrl = inject(ToastController);
 
   // Local draft that mirrors the profile for inline editing
   draft = { ...this.state.userProfile() };
+
+  ngOnInit() {
+    this.health.init();
+  }
 
   userInitial() {
     const name = this.authService.currentUser()?.name || this.state.userProfile().displayName;
@@ -307,6 +415,37 @@ export class ProfileComponent {
   save() {
     this.state.updateProfile({ ...this.draft });
     this.showToast();
+  }
+
+  async connectHealth() {
+    await this.health.connect();
+  }
+
+  async refreshHealth() {
+    await this.health.refreshToday();
+  }
+
+  async importHealthWeight() {
+    const weight = this.health.todaySummary().weight;
+    if (weight === null) return;
+
+    const alert = await this.alertCtrl.create({
+      header: 'Importar peso',
+      message: `Health Connect detectó ${weight.toFixed(1)} kg. ¿Quieres actualizar tu peso actual?`,
+      buttons: [
+        { text: 'Cancelar', role: 'cancel' },
+        {
+          text: 'Actualizar',
+          handler: () => {
+            this.draft.currentWeight = weight;
+            this.state.updateProfile({ currentWeight: weight });
+            this.showToast();
+          }
+        }
+      ]
+    });
+
+    await alert.present();
   }
 
   private toastTimeout: any;
