@@ -24,6 +24,7 @@ import { FoodItem, NutritionStateService } from '../services/nutrition-state.ser
       <div class="meal-body" *ngIf="expanded" @slideIn>
         <!-- Food list -->
         <div class="food-row" *ngFor="let food of foods">
+          <span class="food-emoji">{{ food.emoji || '🍽️' }}</span>
           <div class="food-info">
             <span class="food-name">{{ food.name }}</span>
             <span class="food-portion">{{ food.portion }}</span>
@@ -99,14 +100,23 @@ import { FoodItem, NutritionStateService } from '../services/nutrition-state.ser
       align-items: center;
       padding: 8px 0;
       border-bottom: 1px solid var(--app-border);
+      gap: 10px;
     }
     .food-row:last-of-type {
       border-bottom: none;
+    }
+    .food-emoji {
+      width: 24px;
+      text-align: center;
+      font-size: 18px;
+      flex-shrink: 0;
     }
     .food-info {
       display: flex;
       flex-direction: column;
       gap: 2px;
+      flex: 1;
+      min-width: 0;
     }
     .food-name {
       font-size: 14px;

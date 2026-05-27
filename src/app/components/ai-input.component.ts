@@ -1,7 +1,7 @@
 import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { IonicModule, ActionSheetController, ToastController } from '@ionic/angular';
+import { IonicModule, ToastController } from '@ionic/angular';
 import { AiService, AiFoodItem } from '../services/ai.service';
 import { NutritionStateService } from '../services/nutrition-state.service';
 
@@ -49,7 +49,7 @@ import { NutritionStateService } from '../services/nutrition-state.service';
           <div class="results-title">{{ results().length }} alimento{{ results().length > 1 ? 's' : '' }} detectado{{ results().length > 1 ? 's' : '' }}</div>
 
           <div class="result-item" *ngFor="let food of results()">
-            <ion-icon class="result-emoji" name="restaurant-outline"></ion-icon>
+            <span class="result-emoji">{{ food.emoji || '🍽️' }}</span>
             <div class="result-info">
               <span class="result-name">{{ food.name }}</span>
               <span class="result-detail">{{ food.portion }} · {{ food.calories }} kcal · P: {{ food.protein }}g</span>
@@ -63,6 +63,22 @@ import { NutritionStateService } from '../services/nutrition-state.service';
               Agregar todos
             </button>
             <button class="dismiss-btn" (click)="clearResults()">Descartar</button>
+          </div>
+        </div>
+
+        <!-- Meal picker overlay for bulk add -->
+        <div class="meal-picker-overlay" *ngIf="mealPickerOpen()" (click)="cancelMealPicker()">
+          <div class="meal-picker-card" (click)="$event.stopPropagation()">
+            <div class="meal-picker-title">¿A qué comida agregar?</div>
+            <button
+              class="meal-picker-btn"
+              *ngFor="let meal of nutritionState.meals()"
+              (click)="addAllToMeal(meal.name)"
+            >
+              <ion-icon [name]="meal.icon"></ion-icon>
+              <span>{{ meal.name }}</span>
+            </button>
+            <button class="meal-picker-cancel" (click)="cancelMealPicker()">Cancelar</button>
           </div>
         </div>
 
@@ -294,6 +310,65 @@ import { NutritionStateService } from '../services/nutrition-state.service';
       cursor: pointer;
     }
 
+    .meal-picker-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      background: rgba(0, 0, 0, 0.55);
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      padding: 16px;
+    }
+    .meal-picker-card {
+      width: 100%;
+      max-width: 560px;
+      background: var(--app-surface);
+      border: 1px solid var(--app-border);
+      border-radius: 18px;
+      padding: 14px;
+      box-shadow: 0 18px 45px rgba(0, 0, 0, 0.35);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .meal-picker-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--app-text);
+      margin-bottom: 2px;
+    }
+    .meal-picker-btn {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
+      padding: 12px 14px;
+      border: 1px solid var(--app-border);
+      border-radius: 12px;
+      background: var(--app-bg);
+      color: var(--app-text);
+      font-family: inherit;
+      font-size: 14px;
+      cursor: pointer;
+      text-align: left;
+    }
+    .meal-picker-btn ion-icon {
+      font-size: 18px;
+      color: var(--app-accent);
+    }
+    .meal-picker-cancel {
+      margin-top: 2px;
+      padding: 11px 14px;
+      border: 1px solid var(--app-border);
+      border-radius: 12px;
+      background: none;
+      color: var(--app-muted);
+      font-family: inherit;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
     /* Error */
     .error-msg {
       margin-top: 10px;
@@ -346,8 +421,7 @@ import { NutritionStateService } from '../services/nutrition-state.service';
 })
 export class AiInputComponent {
   private aiService = inject(AiService);
-  private nutritionState = inject(NutritionStateService);
-  private actionSheetCtrl = inject(ActionSheetController);
+  nutritionState = inject(NutritionStateService);
   private toastCtrl = inject(ToastController);
 
   isOpen = signal(false);
@@ -355,6 +429,8 @@ export class AiInputComponent {
   results = signal<AiFoodItem[]>([]);
   errorMsg = signal<string>('');
   isMissingApiKey = signal<boolean>(false);
+  mealPickerOpen = signal<boolean>(false);
+  private pendingFoods: AiFoodItem[] = [];
   userText = '';
 
   examples = [
@@ -416,37 +492,38 @@ export class AiInputComponent {
   }
 
   async confirmAll() {
-    const meals = this.nutritionState.meals();
-    const buttons = meals.map(meal => ({
-      text: meal.name,
-      icon: meal.icon,
-      handler: () => {
-        const foods = this.results();
-        foods.forEach(food => {
-          this.nutritionState.addFoodToMeal(meal.name, {
-            id: Date.now().toString() + Math.random().toString(36).substr(2, 4),
-            name: food.name,
-            emoji: food.emoji,
-            portion: food.portion,
-            calories: food.calories,
-            protein: food.protein,
-            carbs: food.carbs,
-            fat: food.fat,
-          });
-        });
-        this.showSuccessToast(foods.length, meal.name);
-        this.clearResults();
-        this.userText = '';
-        this.isOpen.set(false);
-      }
-    }));
-    buttons.push({ text: 'Cancelar', handler: () => {} } as any);
+    if (this.results().length === 0) return;
+    this.pendingFoods = [...this.results()];
+    this.mealPickerOpen.set(true);
+  }
 
-    const sheet = await this.actionSheetCtrl.create({
-      header: '¿A qué comida agregar?',
-      buttons,
+  async addAllToMeal(mealName: string) {
+    const foods = this.pendingFoods.length > 0 ? this.pendingFoods : this.results();
+
+    foods.forEach(food => {
+      this.nutritionState.addFoodToMeal(mealName, {
+        id: Date.now().toString() + Math.random().toString(36).substr(2, 4),
+        name: food.name,
+        emoji: food.emoji,
+        portion: food.portion,
+        calories: food.calories,
+        protein: food.protein,
+        carbs: food.carbs,
+        fat: food.fat,
+      });
     });
-    await sheet.present();
+
+    await this.showSuccessToast(foods.length, mealName);
+    this.pendingFoods = [];
+    this.mealPickerOpen.set(false);
+    this.clearResults();
+    this.userText = '';
+    this.isOpen.set(false);
+  }
+
+  cancelMealPicker() {
+    this.pendingFoods = [];
+    this.mealPickerOpen.set(false);
   }
 
   async showSuccessToast(count: number, mealName: string) {
