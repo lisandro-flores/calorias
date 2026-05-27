@@ -45,6 +45,9 @@ export class Entry {
   @Prop({ default: 0 })
   waterGlasses: number;
 
+  @Prop({ type: Date })
+  clientUpdatedAt?: Date;
+
   @Prop({ type: [{ name: String, foods: [SchemaFactory.createForClass(FoodItem)] }] })
   meals: { name: string; foods: FoodItem[] }[];
 }

@@ -11,12 +11,6 @@ import { NutritionStateService, ActivityLevel } from '../services/nutrition-stat
   standalone: true,
   imports: [CommonModule, IonicModule, FormsModule],
   template: `
-    <ion-header class="ion-no-border">
-      <ion-toolbar>
-        <ion-title class="page-title">Perfil</ion-title>
-      </ion-toolbar>
-    </ion-header>
-
     <ion-content class="ion-padding">
 
       <!-- User card -->
@@ -183,8 +177,6 @@ import { NutritionStateService, ActivityLevel } from '../services/nutrition-stat
     </ion-content>
   `,
   styles: [`
-    .page-title { font-size: 20px; font-weight: 700; }
-
     /* User card */
     .user-card {
       display: flex; align-items: center; gap: 14px;

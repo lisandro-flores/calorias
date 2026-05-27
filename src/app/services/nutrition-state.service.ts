@@ -1,4 +1,5 @@
 import { Injectable, signal, computed, effect, inject } from '@angular/core';
+import { DOCUMENT } from '@angular/common';
 import { AuthService } from './auth.service';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../environments/environment';
@@ -26,6 +27,8 @@ export interface DayLog {
   meals: Meal[];
   waterGlasses: number;
 }
+
+export type SyncStatus = 'pending' | 'syncing' | 'synced' | 'error';
 
 export type Gender = 'male' | 'female';
 export type ActivityLevel = 'sedentary' | 'light' | 'moderate' | 'active' | 'very_active';
@@ -96,6 +99,23 @@ export class NutritionStateService {
   userProfile = signal<UserProfile>(this.loadProfile());
   recentFoods = signal<FoodItem[]>(this.loadRecentFoods());
   history = signal<DayLog[]>(this.loadHistory());
+  syncStatus = signal<SyncStatus>('synced');
+
+  syncStatusLabel = computed(() => {
+    const status = this.syncStatus();
+    if (status === 'pending') return 'Pendiente';
+    if (status === 'syncing') return 'Sincronizando';
+    if (status === 'error') return 'Error de sync';
+    return 'Sincronizado';
+  });
+
+  syncStatusIcon = computed(() => {
+    const status = this.syncStatus();
+    if (status === 'pending') return 'time-outline';
+    if (status === 'syncing') return 'sync-outline';
+    if (status === 'error') return 'alert-circle-outline';
+    return 'cloud-done-outline';
+  });
 
   // ─── BMR / TDEE (Mifflin-St Jeor) ───
   bmr = computed(() => {
@@ -176,20 +196,32 @@ export class NutritionStateService {
   private http = inject(HttpClient);
   private authService = inject(AuthService);
   private toastCtrl = inject(ToastController);
+  private document = inject(DOCUMENT);
   private syncTimeout: any;
   private profileSyncTimeout: any;
+  private midnightTimeout: ReturnType<typeof setTimeout> | null = null;
   private isSyncing = false;
+  private isHydrating = true;
+  private initialHydrationStepsRemaining = 3;
 
   constructor() {
-    this.pullFromMongo();
-    this.pullProfileFromMongo();
-    this.pullHistoryFromMongo();
+    this.pullFromMongo(true);
+    this.pullProfileFromMongo(true);
+    this.pullHistoryFromMongo(true);
+    this.scheduleNextDateCheck();
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('focus', this.handleVisibilityOrFocusChange);
+    }
+
+    this.document.addEventListener('visibilitychange', this.handleVisibilityOrFocusChange);
 
     effect(() => {
       const user = this.authService.currentUser();
       if (user && user.id !== 'offline_mode') {
         this.pullFromMongo();
         this.pullProfileFromMongo();
+        this.pullHistoryFromMongo();
       }
     });
 
@@ -197,28 +229,28 @@ export class NutritionStateService {
       const m = this.meals();
       localStorage.setItem(`meals_${this.todayKey}`, JSON.stringify(m));
       this.saveTodayToHistory();
-      if (!this.isSyncing) {
+      if (!this.isSyncing && !this.isHydrating) {
         this.syncToMongo();
       }
     });
     effect(() => {
       const w = this.waterGlasses();
       localStorage.setItem(`water_${this.todayKey}`, JSON.stringify(w));
-      if (!this.isSyncing) {
+      if (!this.isSyncing && !this.isHydrating) {
         this.syncToMongo();
       }
     });
     effect(() => {
       const profile = this.userProfile();
       localStorage.setItem('user_profile', JSON.stringify(profile));
-      if (!this.isSyncing) {
+      if (!this.isSyncing && !this.isHydrating) {
         this.syncProfileToMongo();
       }
     });
     effect(() => {
       const recent = this.recentFoods().slice(0, 15);
       localStorage.setItem('recent_foods', JSON.stringify(recent));
-      if (!this.isSyncing) {
+      if (!this.isSyncing && !this.isHydrating) {
         this.syncProfileToMongo();
       }
     });
@@ -231,7 +263,51 @@ export class NutritionStateService {
       this.todayKey = newKey;
       this.meals.set(this.loadTodayMeals());
       this.waterGlasses.set(this.loadTodayWater());
+      this.pullFromMongo();
     }
+  }
+
+  private handleVisibilityOrFocusChange = () => {
+    this.checkDateChange();
+    this.refreshFromServer();
+    this.scheduleNextDateCheck();
+  };
+
+  private refreshFromServer() {
+    this.pullFromMongo();
+    this.pullProfileFromMongo();
+    this.pullHistoryFromMongo();
+  }
+
+  private finishInitialHydrationStep() {
+    if (!this.isHydrating) return;
+    this.initialHydrationStepsRemaining = Math.max(0, this.initialHydrationStepsRemaining - 1);
+    if (this.initialHydrationStepsRemaining === 0) {
+      this.isHydrating = false;
+    }
+  }
+
+  private scheduleNextDateCheck() {
+    if (this.midnightTimeout) {
+      clearTimeout(this.midnightTimeout);
+    }
+
+    const now = new Date();
+    const nextUtcMidnight = Date.UTC(
+      now.getUTCFullYear(),
+      now.getUTCMonth(),
+      now.getUTCDate() + 1,
+      0,
+      0,
+      0,
+      0,
+    );
+    const delay = Math.max(nextUtcMidnight - now.getTime(), 1000);
+
+    this.midnightTimeout = setTimeout(() => {
+      this.checkDateChange();
+      this.scheduleNextDateCheck();
+    }, delay);
   }
 
   private syncProfileToMongo() {
@@ -260,20 +336,26 @@ export class NutritionStateService {
 
   private syncToMongo() {
     const user = this.authService.currentUser();
-    if (!user || user.id === 'offline_mode') return;
+    if (!user || user.id === 'offline_mode') {
+      this.syncStatus.set('synced');
+      return;
+    }
 
     if (this.syncTimeout) {
       clearTimeout(this.syncTimeout);
     }
 
     this.syncTimeout = setTimeout(() => {
+      this.syncStatus.set('syncing');
       this.http.post(`${environment.apiUrl}/entries/sync`, {
         userId: user.id,
         date: this.todayKey,
         meals: this.meals(),
-        waterGlasses: this.waterGlasses()
+        waterGlasses: this.waterGlasses(),
+        clientUpdatedAt: this.getTodayClientUpdatedAt(),
       }).subscribe({
         next: async () => {
+          this.syncStatus.set('synced');
           console.log('Sincronizado con MongoDB');
           const toast = await this.toastCtrl.create({
             message: 'Respaldado en la nube',
@@ -284,20 +366,32 @@ export class NutritionStateService {
           });
           toast.present();
         },
-        error: (err) => console.error('Error sincronizando con MongoDB', err)
+        error: (err) => {
+          this.syncStatus.set('error');
+          console.error('Error sincronizando con MongoDB', err);
+        }
       });
     }, 2500);
   }
 
-  private pullFromMongo() {
+  private pullFromMongo(trackHydration = false) {
     const user = this.authService.currentUser();
-    if (!user || user.id === 'offline_mode') return;
+    if (!user || user.id === 'offline_mode') {
+      if (trackHydration) {
+        this.finishInitialHydrationStep();
+      }
+      return;
+    }
 
     this.http.get<any>(`${environment.apiUrl}/entries/day?date=${this.todayKey}&userId=${user.id}`)
       .subscribe({
         next: (res) => {
           if (res.success && res.data) {
             this.isSyncing = true;
+            const serverUpdatedAt = res.data.clientUpdatedAt ?? res.data.updatedAt;
+            if (serverUpdatedAt) {
+              this.setClientUpdatedAtForDate(this.todayKey, serverUpdatedAt);
+            }
             if (res.data.meals && res.data.meals.length > 0) {
               this.meals.set(res.data.meals);
             }
@@ -307,14 +401,27 @@ export class NutritionStateService {
             // Defer unsetting flag so Angular processes signal effects first
             setTimeout(() => this.isSyncing = false, 0);
           }
+          if (trackHydration) {
+            this.finishInitialHydrationStep();
+          }
         },
-        error: (err) => console.error('Error al recuperar datos de Mongo', err)
+        error: (err) => {
+          console.error('Error al recuperar datos de Mongo', err);
+          if (trackHydration) {
+            this.finishInitialHydrationStep();
+          }
+        }
       });
   }
 
-  private pullProfileFromMongo() {
+  private pullProfileFromMongo(trackHydration = false) {
     const user = this.authService.currentUser();
-    if (!user || user.id === 'offline_mode') return;
+    if (!user || user.id === 'offline_mode') {
+      if (trackHydration) {
+        this.finishInitialHydrationStep();
+      }
+      return;
+    }
 
     this.http.get<any>(`${environment.apiUrl}/auth/profile?userId=${user.id}`)
       .subscribe({
@@ -341,14 +448,27 @@ export class NutritionStateService {
             this.recentFoods.set(data.recentFoods.slice(0, 15));
           }
           setTimeout(() => this.isSyncing = false, 0);
+          if (trackHydration) {
+            this.finishInitialHydrationStep();
+          }
         },
-        error: (err) => console.error('Error al recuperar perfil de Mongo', err)
+        error: (err) => {
+          console.error('Error al recuperar perfil de Mongo', err);
+          if (trackHydration) {
+            this.finishInitialHydrationStep();
+          }
+        }
       });
   }
 
-  private pullHistoryFromMongo() {
+  private pullHistoryFromMongo(trackHydration = false) {
     const user = this.authService.currentUser();
-    if (!user || user.id === 'offline_mode') return;
+    if (!user || user.id === 'offline_mode') {
+      if (trackHydration) {
+        this.finishInitialHydrationStep();
+      }
+      return;
+    }
 
     this.http.get<any>(`${environment.apiUrl}/entries/range?userId=${user.id}&days=30`)
       .subscribe({
@@ -366,8 +486,16 @@ export class NutritionStateService {
             this.history.set(mappedHistory);
             localStorage.setItem('day_history', JSON.stringify(mappedHistory));
           }
+          if (trackHydration) {
+            this.finishInitialHydrationStep();
+          }
         },
-        error: (err) => console.error('Error al recuperar historial de Mongo', err)
+        error: (err) => {
+          console.error('Error al recuperar historial de Mongo', err);
+          if (trackHydration) {
+            this.finishInitialHydrationStep();
+          }
+        }
       });
   }
 
@@ -389,6 +517,7 @@ export class NutritionStateService {
   }
 
   addFoodToMeal(mealName: string, food: FoodItem) {
+    this.markTodayDirty();
     this.meals.update(meals => meals.map(meal => {
       if (meal.name === mealName) {
         return { ...meal, foods: [...meal.foods, food] };
@@ -399,6 +528,7 @@ export class NutritionStateService {
   }
 
   removeFoodFromMeal(mealName: string, foodId: string) {
+    this.markTodayDirty();
     this.meals.update(meals => meals.map(meal => {
       if (meal.name === mealName) {
         return { ...meal, foods: meal.foods.filter(f => f.id !== foodId) };
@@ -421,8 +551,15 @@ export class NutritionStateService {
     this.addFoodToMeal(mealName, food);
   }
 
-  addWater() { this.waterGlasses.update(v => v + 1); }
-  removeWater() { this.waterGlasses.update(v => Math.max(0, v - 1)); }
+  addWater() {
+    this.markTodayDirty();
+    this.waterGlasses.update(v => v + 1);
+  }
+
+  removeWater() {
+    this.markTodayDirty();
+    this.waterGlasses.update(v => Math.max(0, v - 1));
+  }
 
   private addToRecent(food: FoodItem) {
     this.recentFoods.update(list => {
@@ -447,6 +584,7 @@ export class NutritionStateService {
       }));
       this.meals.update(meals => meals.map(meal => {
         if (meal.name === mealName) {
+          this.markTodayDirty();
           return { ...meal, foods: [...meal.foods, ...copiedFoods] };
         }
         return meal;
@@ -501,8 +639,33 @@ export class NutritionStateService {
   }
 
   resetToday() {
+    this.markTodayDirty();
     this.meals.set(DEFAULT_MEALS.map(m => ({ ...m, foods: [] })));
     this.waterGlasses.set(0);
+  }
+
+  private markTodayDirty() {
+    this.syncStatus.set('pending');
+    this.setClientUpdatedAtForDate(this.todayKey, new Date().toISOString());
+  }
+
+  private getTodayClientUpdatedAt(): string {
+    const key = this.getClientUpdatedAtStorageKey(this.todayKey);
+    const stored = localStorage.getItem(key);
+    if (stored) {
+      return stored;
+    }
+    const now = new Date().toISOString();
+    localStorage.setItem(key, now);
+    return now;
+  }
+
+  private setClientUpdatedAtForDate(dateKey: string, value: string) {
+    localStorage.setItem(this.getClientUpdatedAtStorageKey(dateKey), value);
+  }
+
+  private getClientUpdatedAtStorageKey(dateKey: string): string {
+    return `entry_updated_at_${dateKey}`;
   }
 
   private getDateKey(date: Date): string {

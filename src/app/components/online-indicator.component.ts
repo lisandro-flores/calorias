@@ -1,4 +1,4 @@
-import { Component, inject, effect } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { NetworkStatusService } from '../services/network-status.service';
 
@@ -7,22 +7,21 @@ import { NetworkStatusService } from '../services/network-status.service';
   standalone: true,
   imports: [CommonModule],
   template: `
-    <div id="online-indicator" [class.offline]="!isOnline()" [title]="isOnline() ? 'Conexión OK' : 'Sin acceso a Internet'">
+    <div id="online-indicator" [class.offline]="!isOnline()">
       <span class="dot"></span>
-      <span id="online-text">{{ isOnline() ? 'En línea' : 'Sin conexión' }}</span>
     </div>
   `,
   styles: [`
     #online-indicator {
       position: absolute;
       top: 12px;
-      right: 18px;
+      left: 18px;
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 0;
       background: rgba(0,0,0,0.65);
-      padding: 6px 12px;
-      border-radius: 18px;
+      padding: 6px;
+      border-radius: 999px;
       border: 1px solid var(--app-border, #333);
       color: var(--app-text, #e0e0e0);
       font-size: 13px;

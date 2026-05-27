@@ -8,12 +8,6 @@ import { NutritionStateService } from '../services/nutrition-state.service';
   standalone: true,
   imports: [CommonModule, IonicModule],
   template: `
-    <ion-header class="ion-no-border">
-      <ion-toolbar>
-        <ion-title class="page-title">Progreso</ion-title>
-      </ion-toolbar>
-    </ion-header>
-
     <ion-content class="ion-padding">
 
       <!-- Weight Progress -->
@@ -137,8 +131,6 @@ import { NutritionStateService } from '../services/nutrition-state.service';
     </ion-content>
   `,
   styles: [`
-    .page-title { font-size: 20px; font-weight: 700; }
-
     /* Weight card */
     .weight-card {
       background: var(--app-surface); border: 1px solid var(--app-border);

@@ -9,12 +9,6 @@ import { NutritionStateService } from '../services/nutrition-state.service';
   standalone: true,
   imports: [CommonModule, IonicModule],
   template: `
-    <ion-header class="ion-no-border">
-      <ion-toolbar>
-        <ion-title class="page-title">Coach IA</ion-title>
-      </ion-toolbar>
-    </ion-header>
-
     <ion-content class="ion-padding">
       <div class="header-section">
         <ion-icon name="bulb-outline" class="huge-icon"></ion-icon>
@@ -38,10 +32,6 @@ import { NutritionStateService } from '../services/nutrition-state.service';
     </ion-content>
   `,
   styles: [`
-    .page-title {
-      font-size: 20px;
-      font-weight: 700;
-    }
     .header-section {
       text-align: center;
       margin-bottom: 30px;

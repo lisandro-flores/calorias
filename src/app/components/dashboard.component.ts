@@ -25,13 +25,14 @@ import { AiInputComponent } from './ai-input.component';
     AiInputComponent
   ],
   template: `
-    <ion-header class="ion-no-border">
-      <ion-toolbar>
-        <ion-title class="page-title">Hoy</ion-title>
-      </ion-toolbar>
-    </ion-header>
-
     <ion-content class="ion-padding" [scrollY]="true">
+      <div class="top-row">
+        <div class="sync-badge" [ngClass]="state.syncStatus()">
+          <ion-icon [name]="state.syncStatusIcon()"></ion-icon>
+          <span>{{ state.syncStatusLabel() }}</span>
+        </div>
+      </div>
+
       <!-- Hero ring + macros -->
       <app-hero-summary></app-hero-summary>
 
@@ -63,10 +64,42 @@ import { AiInputComponent } from './ai-input.component';
     </ion-content>
   `,
   styles: [`
-    .page-title {
-      font-size: 20px;
-      font-weight: 700;
+    .top-row {
+      display: flex;
+      justify-content: flex-end;
+      margin-bottom: 10px;
     }
+
+    .sync-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--app-border);
+      background: var(--app-surface-2);
+      color: var(--app-muted);
+    }
+
+    .sync-badge ion-icon {
+      font-size: 14px;
+    }
+
+    .sync-badge.pending,
+    .sync-badge.syncing {
+      color: var(--ion-color-warning);
+    }
+
+    .sync-badge.error {
+      color: var(--ion-color-danger);
+    }
+
+    .sync-badge.synced {
+      color: var(--ion-color-success);
+    }
+
     .footer-space {
       height: 20px;
     }

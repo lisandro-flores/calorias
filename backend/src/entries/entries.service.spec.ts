@@ -11,6 +11,7 @@ describe('EntriesService', () => {
     _id: '000000000000000000000001',
     date: new Date('2024-05-26T00:00:00.000Z'),
     user: '000000000000000000000001',
+    clientUpdatedAt: new Date('2024-05-26T12:00:00.000Z'),
     meals: [
       {
         name: 'Desayuno',
@@ -55,14 +56,25 @@ describe('EntriesService', () => {
       ];
       const waterGlasses = 3;
 
+      mockEntryModel.findOne.mockResolvedValue(null);
       mockEntryModel.findOneAndUpdate.mockResolvedValue(mockEntry);
 
       const result = await service.saveEntry(userId, date, meals, waterGlasses);
 
       expect(result).toEqual(mockEntry);
+      expect(mockEntryModel.findOne).toHaveBeenCalledWith({
+        date: new Date('2024-05-26T00:00:00.000Z'),
+        user: userId,
+      });
       expect(mockEntryModel.findOneAndUpdate).toHaveBeenCalledWith(
         { date: new Date('2024-05-26T00:00:00.000Z'), user: userId },
-        { meals, waterGlasses, date: new Date('2024-05-26T00:00:00.000Z'), user: userId },
+        {
+          meals,
+          waterGlasses,
+          date: new Date('2024-05-26T00:00:00.000Z'),
+          user: userId,
+          clientUpdatedAt: expect.any(Date),
+        },
         { upsert: true, new: true },
       );
     });
@@ -84,6 +96,7 @@ describe('EntriesService', () => {
         waterGlasses,
       };
 
+      mockEntryModel.findOne.mockResolvedValue(mockEntry);
       mockEntryModel.findOneAndUpdate.mockResolvedValue(updatedEntry);
 
       const result = await service.saveEntry(userId, date, newMeals, waterGlasses);
@@ -98,6 +111,7 @@ describe('EntriesService', () => {
       const meals = [];
       const waterGlasses = 2;
 
+      mockEntryModel.findOne.mockResolvedValue(mockEntry);
       mockEntryModel.findOneAndUpdate.mockResolvedValue({
         ...mockEntry,
         meals,
@@ -114,6 +128,7 @@ describe('EntriesService', () => {
       const meals = [];
       const waterGlasses = 0;
 
+      mockEntryModel.findOne.mockResolvedValue(mockEntry);
       mockEntryModel.findOneAndUpdate.mockResolvedValue(mockEntry);
 
       await service.saveEntry(userId, date, meals, waterGlasses);
@@ -127,6 +142,21 @@ describe('EntriesService', () => {
         expect.any(Object),
         expect.any(Object),
       );
+    });
+
+    it('should ignore stale updates using clientUpdatedAt', async () => {
+      const userId = '000000000000000000000001';
+      const date = '2024-05-26';
+      const meals = [{ name: 'Cena', calories: 400 }];
+      const waterGlasses = 1;
+      const staleTimestamp = '2024-05-26T11:00:00.000Z';
+
+      mockEntryModel.findOne.mockResolvedValue(mockEntry);
+
+      const result = await service.saveEntry(userId, date, meals, waterGlasses, staleTimestamp);
+
+      expect(result).toEqual(mockEntry);
+      expect(mockEntryModel.findOneAndUpdate).not.toHaveBeenCalled();
     });
   });
 

@@ -130,7 +130,7 @@ describe('AiService', () => {
   describe('getCoachAdvice', () => {
     it('should throw BadRequestException when API key is missing', async () => {
       const profile = { name: 'Juan', dailyCalories: 2000 };
-      const meals = [];
+      const meals: any[] = [];
 
       await expect(service.getCoachAdvice(profile, meals)).rejects.toThrow(
         BadRequestException,
@@ -147,7 +147,7 @@ describe('AiService', () => {
       service['ai'] = mockGoogleGenAI;
 
       const profile = { name: 'Juan', dailyCalories: 2000, goal: 1800 };
-      const meals = [
+      const meals: any[] = [
         { name: 'Desayuno', calories: 500 },
         { name: 'Almuerzo', calories: 700 },
       ];
@@ -165,7 +165,7 @@ describe('AiService', () => {
       service['ai'] = mockGoogleGenAI;
 
       const profile = { name: 'Juan' };
-      const meals = [];
+      const meals: any[] = [];
 
       const result = await service.getCoachAdvice(profile, meals);
 
@@ -180,7 +180,7 @@ describe('AiService', () => {
       service['ai'] = mockGoogleGenAI;
 
       const profile = {};
-      const meals = [];
+      const meals: any[] = [];
 
       await expect(service.getCoachAdvice(profile, meals)).rejects.toThrow(HttpException);
     });
@@ -193,7 +193,7 @@ describe('AiService', () => {
       service['ai'] = mockGoogleGenAI;
 
       const profile = {};
-      const meals = [];
+      const meals: any[] = [];
 
       await expect(service.getCoachAdvice(profile, meals)).rejects.toThrow(HttpException);
     });

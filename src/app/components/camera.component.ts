@@ -7,12 +7,6 @@ import { IonicModule } from '@ionic/angular';
   standalone: true,
   imports: [CommonModule, IonicModule],
   template: `
-    <ion-header class="ion-no-border">
-      <ion-toolbar>
-        <ion-title class="page-title">Cámara (IA)</ion-title>
-      </ion-toolbar>
-    </ion-header>
-
     <ion-content class="ion-padding" [scrollY]="false">
       <div class="coming-soon-container">
         <ion-icon name="camera-outline" class="huge-icon"></ion-icon>
@@ -23,10 +17,6 @@ import { IonicModule } from '@ionic/angular';
     </ion-content>
   `,
   styles: [`
-    .page-title {
-      font-size: 20px;
-      font-weight: 700;
-    }
     .coming-soon-container {
       display: flex;
       flex-direction: column;

@@ -6,9 +6,24 @@ export class EntriesController {
   constructor(private readonly entriesService: EntriesService) {}
 
   @Post('sync')
-  async syncEntry(@Body() body: { userId: string, date: string, meals: any[], waterGlasses: number }) {
+  async syncEntry(
+    @Body()
+    body: {
+      userId: string;
+      date: string;
+      meals: any[];
+      waterGlasses: number;
+      clientUpdatedAt?: string;
+    },
+  ) {
     if (!body.userId) return { success: false, message: 'Missing userId' };
-    const saved = await this.entriesService.saveEntry(body.userId, body.date, body.meals, body.waterGlasses);
+    const saved = await this.entriesService.saveEntry(
+      body.userId,
+      body.date,
+      body.meals,
+      body.waterGlasses,
+      body.clientUpdatedAt,
+    );
     return { success: true, data: saved };
   }
 

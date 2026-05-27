@@ -72,6 +72,7 @@ describe('EntriesController', () => {
         body.date,
         body.meals,
         body.waterGlasses,
+        undefined,
       );
     });
 
