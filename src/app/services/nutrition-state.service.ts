@@ -213,6 +213,7 @@ export class NutritionStateService {
 
     if (typeof window !== 'undefined') {
       window.addEventListener('focus', this.handleVisibilityOrFocusChange);
+      window.addEventListener('online', this.handleVisibilityOrFocusChange);
     }
 
     this.document.addEventListener('visibilitychange', this.handleVisibilityOrFocusChange);
@@ -692,6 +693,10 @@ export class NutritionStateService {
   }
 
   private loadTodayMeals(): Meal[] {
+    if (this.shouldPreferCloudData()) {
+      return DEFAULT_MEALS.map(m => ({ ...m, foods: [] }));
+    }
+
     try {
       const stored = localStorage.getItem(`meals_${this.todayKey}`);
       if (stored) return JSON.parse(stored);
@@ -700,6 +705,10 @@ export class NutritionStateService {
   }
 
   private loadTodayWater(): number {
+    if (this.shouldPreferCloudData()) {
+      return 0;
+    }
+
     try {
       const stored = localStorage.getItem(`water_${this.todayKey}`);
       if (stored) return JSON.parse(stored);
@@ -708,6 +717,10 @@ export class NutritionStateService {
   }
 
   private loadProfile(): UserProfile {
+    if (this.shouldPreferCloudData()) {
+      return { ...DEFAULT_PROFILE };
+    }
+
     try {
       const stored = localStorage.getItem('user_profile');
       if (stored) return JSON.parse(stored);
@@ -729,6 +742,10 @@ export class NutritionStateService {
   }
 
   private loadRecentFoods(): FoodItem[] {
+    if (this.shouldPreferCloudData()) {
+      return [];
+    }
+
     try {
       const stored = localStorage.getItem('recent_foods');
       if (stored) return JSON.parse(stored);
@@ -737,10 +754,25 @@ export class NutritionStateService {
   }
 
   private loadHistory(): DayLog[] {
+    if (this.shouldPreferCloudData()) {
+      return [];
+    }
+
     try {
       const stored = localStorage.getItem('day_history');
       if (stored) return JSON.parse(stored);
     } catch (e) {}
     return [];
+  }
+
+  private shouldPreferCloudData(): boolean {
+    try {
+      const stored = localStorage.getItem('current_user');
+      if (!stored) return false;
+      const user = JSON.parse(stored);
+      return Boolean(user && user.id && user.id !== 'offline_mode');
+    } catch {
+      return false;
+    }
   }
 }
