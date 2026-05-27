@@ -48,6 +48,9 @@ export class AuthService {
       
       const mongoUser: UserProfile = await response.json();
       this.currentUser.set(mongoUser);
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('auth:login-success', { detail: { userId: mongoUser.id } }));
+      }
       return mongoUser;
       
     } catch (e) {
@@ -62,6 +65,9 @@ export class AuthService {
         token: googleJwt
       };
       this.currentUser.set(mockUser);
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('auth:login-success', { detail: { userId: mockUser.id } }));
+      }
       return mockUser;
     }
   }

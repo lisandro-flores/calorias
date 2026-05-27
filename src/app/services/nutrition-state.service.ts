@@ -214,6 +214,7 @@ export class NutritionStateService {
     if (typeof window !== 'undefined') {
       window.addEventListener('focus', this.handleVisibilityOrFocusChange);
       window.addEventListener('online', this.handleVisibilityOrFocusChange);
+      window.addEventListener('auth:login-success', this.handleLoginSuccess);
     }
 
     this.document.addEventListener('visibilitychange', this.handleVisibilityOrFocusChange);
@@ -281,6 +282,19 @@ export class NutritionStateService {
     this.checkDateChange();
     this.refreshFromServer();
     this.scheduleNextDateCheck();
+  };
+
+  private handleLoginSuccess = () => {
+    const user = this.authService.currentUser();
+    if (!user || user.id === 'offline_mode') return;
+
+    this.isHydrating = true;
+    this.initialHydrationStepsRemaining = 3;
+    this.syncStatus.set('syncing');
+
+    this.pullFromMongo(true);
+    this.pullProfileFromMongo(true);
+    this.pullHistoryFromMongo(true);
   };
 
   private refreshFromServer() {
@@ -694,6 +708,7 @@ export class NutritionStateService {
 
   private loadTodayMeals(): Meal[] {
     if (this.shouldPreferCloudData()) {
+      this.clearLocalDayCache();
       return DEFAULT_MEALS.map(m => ({ ...m, foods: [] }));
     }
 
@@ -706,6 +721,7 @@ export class NutritionStateService {
 
   private loadTodayWater(): number {
     if (this.shouldPreferCloudData()) {
+      this.clearLocalDayCache();
       return 0;
     }
 
@@ -755,6 +771,7 @@ export class NutritionStateService {
 
   private loadHistory(): DayLog[] {
     if (this.shouldPreferCloudData()) {
+      this.clearLocalHistoryCache();
       return [];
     }
 
@@ -774,5 +791,18 @@ export class NutritionStateService {
     } catch {
       return false;
     }
+  }
+
+  private clearLocalDayCache() {
+    try {
+      localStorage.removeItem(`meals_${this.todayKey}`);
+      localStorage.removeItem(`water_${this.todayKey}`);
+    } catch {}
+  }
+
+  private clearLocalHistoryCache() {
+    try {
+      localStorage.removeItem('day_history');
+    } catch {}
   }
 }
