@@ -57,6 +57,7 @@ yarn-error.log
 /.angular
 /.angular/cache
 .sass-cache/
+/.run/
 /.nx
 /.nx/cache
 /connect.lock
