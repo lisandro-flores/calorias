@@ -3,6 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { OAuth2Client } from 'google-auth-library';
 import { RecentFoodItem, User, UserDocument } from '../users/schemas/user.schema';
+import * as jwt from 'jsonwebtoken';
 
 export interface UpdateUserProfileDto {
   displayName?: string;
@@ -80,10 +81,18 @@ export class AuthService {
         await user.save();
       }
 
-      // Devolvemos la info limpia para Angular
+      // Generar un JWT propio para sesión (mejor control de expiración/revocación)
+      const secret = process.env.JWT_SECRET || 'dev_jwt_secret';
+      const jwtToken = jwt.sign(
+        { sub: user._id.toString(), email: user.email },
+        secret,
+        { expiresIn: '7d' },
+      );
+
+      // Devolvemos la info limpia para Angular con el token propio
       return {
         ...this.toProfileResponse(user),
-        token: credentialToken,
+        token: jwtToken,
       };
       
     } catch (error) {

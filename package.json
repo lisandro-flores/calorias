@@ -9,6 +9,8 @@
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
+    "e2e:install": "npx playwright install --with-deps",
+    "e2e:test": "npx playwright test",
     "lint": "ng lint"
   },
   "private": true,
@@ -63,6 +65,8 @@
     "karma-jasmine": "~5.1.0",
     "karma-jasmine-html-reporter": "~2.1.0",
     "typescript": "~5.9.0"
+  ,
+    "playwright": "^1.41.0"
   },
   "description": "An Ionic project"
 }
