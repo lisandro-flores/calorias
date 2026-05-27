@@ -2,7 +2,22 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { OAuth2Client } from 'google-auth-library';
-import { User, UserDocument } from '../users/schemas/user.schema';
+import { RecentFoodItem, User, UserDocument } from '../users/schemas/user.schema';
+
+export interface UpdateUserProfileDto {
+  displayName?: string;
+  age?: number;
+  gender?: 'male' | 'female';
+  heightCm?: number;
+  startWeight?: number;
+  currentWeight?: number;
+  goalWeight?: number;
+  activityLevel?: 'sedentary' | 'light' | 'moderate' | 'active' | 'very_active';
+  calorieGoalOverride?: number | null;
+  proteinGoalOverride?: number | null;
+  waterGoal?: number;
+  recentFoods?: RecentFoodItem[];
+}
 
 @Injectable()
 export class AuthService {
@@ -13,6 +28,28 @@ export class AuthService {
 
   constructor(@InjectModel(User.name) private userModel: Model<UserDocument>) {
     this.googleClient = new OAuth2Client(this.GOOGLE_CLIENT_ID);
+  }
+
+  private toProfileResponse(user: any) {
+    return {
+      id: user._id,
+      email: user.email,
+      name: user.name,
+      picture: user.picture,
+      displayName: user.displayName ?? user.name ?? 'Usuario',
+      age: user.age,
+      gender: user.gender,
+      heightCm: user.heightCm,
+      startWeight: user.startWeight,
+      currentWeight: user.currentWeight,
+      goalWeight: user.goalWeight,
+      activityLevel: user.activityLevel,
+      calorieGoalOverride: user.calorieGoalOverride ?? null,
+      proteinGoalOverride: user.proteinGoalOverride ?? null,
+      waterGoal: user.waterGoal,
+      calorieGoal: user.calorieGoal,
+      recentFoods: user.recentFoods ?? [],
+    };
   }
 
   async verifyGoogleTokenAndLogin(credentialToken: string) {
@@ -36,22 +73,44 @@ export class AuthService {
         user = new this.userModel({
           email: payload.email,
           name: payload.name,
+          displayName: payload.name || 'Usuario',
           picture: payload.picture,
+          recentFoods: [],
         });
         await user.save();
       }
 
       // Devolvemos la info limpia para Angular
       return {
-        id: user._id,
-        email: user.email,
-        name: user.name,
-        picture: user.picture,
-        token: credentialToken // O podrías generar y firmar tu propio JWT local aquí
+        ...this.toProfileResponse(user),
+        token: credentialToken,
       };
       
     } catch (error) {
        throw new UnauthorizedException('Error autenticando con Google', error.message);
     }
+  }
+
+  async getUserProfile(userId: string) {
+    const user = await this.userModel.findById(userId).exec();
+    if (!user) {
+      throw new UnauthorizedException('Usuario no encontrado');
+    }
+
+    return this.toProfileResponse(user);
+  }
+
+  async updateUserProfile(userId: string, profile: UpdateUserProfileDto) {
+    const user = await this.userModel.findByIdAndUpdate(
+      userId,
+      { $set: profile },
+      { new: true, upsert: false },
+    ).exec();
+
+    if (!user) {
+      throw new UnauthorizedException('Usuario no encontrado');
+    }
+
+    return this.toProfileResponse(user);
   }
 }

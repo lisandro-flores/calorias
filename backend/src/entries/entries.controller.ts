@@ -18,4 +18,12 @@ export class EntriesController {
     const entry = await this.entriesService.getEntry(userId, date);
     return { success: true, data: entry };
   }
+
+  @Get('range')
+  async getRangeEntries(@Query('userId') userId: string, @Query('days') days = '30') {
+    if (!userId) return { success: false, message: 'Missing userId' };
+    const parsedDays = Number(days) || 30;
+    const entries = await this.entriesService.getRecentEntries(userId, parsedDays);
+    return { success: true, data: entries.reverse() };
+  }
 }

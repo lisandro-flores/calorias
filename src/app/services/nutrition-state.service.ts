@@ -177,9 +177,20 @@ export class NutritionStateService {
   private authService = inject(AuthService);
   private toastCtrl = inject(ToastController);
   private syncTimeout: any;
+  private profileSyncTimeout: any;
 
   constructor() {
     this.pullFromMongo();
+    this.pullProfileFromMongo();
+    this.pullHistoryFromMongo();
+
+    effect(() => {
+      const user = this.authService.currentUser();
+      if (user && user.id !== 'offline_mode') {
+        this.pullFromMongo();
+        this.pullProfileFromMongo();
+      }
+    });
 
     effect(() => {
       const m = this.meals();
@@ -193,11 +204,39 @@ export class NutritionStateService {
       this.syncToMongo();
     });
     effect(() => {
-      localStorage.setItem('user_profile', JSON.stringify(this.userProfile()));
+      const profile = this.userProfile();
+      localStorage.setItem('user_profile', JSON.stringify(profile));
+      this.syncProfileToMongo();
     });
     effect(() => {
-      localStorage.setItem('recent_foods', JSON.stringify(this.recentFoods().slice(0, 15)));
+      const recent = this.recentFoods().slice(0, 15);
+      localStorage.setItem('recent_foods', JSON.stringify(recent));
+      this.syncProfileToMongo();
     });
+  }
+
+  private syncProfileToMongo() {
+    const user = this.authService.currentUser();
+    if (!user || user.id === 'offline_mode') return;
+
+    if (this.profileSyncTimeout) {
+      clearTimeout(this.profileSyncTimeout);
+    }
+
+    const profile = this.userProfile();
+
+    this.profileSyncTimeout = setTimeout(() => {
+      this.http.patch(`${environment.apiUrl}/auth/profile`, {
+        userId: user.id,
+        profile,
+        recentFoods: this.recentFoods().slice(0, 15),
+      }).subscribe({
+        next: () => {
+          console.log('Perfil sincronizado con MongoDB');
+        },
+        error: (err) => console.error('Error sincronizando perfil con MongoDB', err)
+      });
+    }, 1500);
   }
 
   private syncToMongo() {
@@ -248,6 +287,63 @@ export class NutritionStateService {
           }
         },
         error: (err) => console.error('Error al recuperar datos de Mongo', err)
+      });
+  }
+
+  private pullProfileFromMongo() {
+    const user = this.authService.currentUser();
+    if (!user || user.id === 'offline_mode') return;
+
+    this.http.get<any>(`${environment.apiUrl}/auth/profile?userId=${user.id}`)
+      .subscribe({
+        next: (res) => {
+          const data = res?.data ?? res;
+          if (!data) return;
+
+          this.userProfile.set({
+            ...this.userProfile(),
+            displayName: data.displayName ?? data.name ?? this.userProfile().displayName,
+            age: data.age ?? this.userProfile().age,
+            gender: data.gender ?? this.userProfile().gender,
+            heightCm: data.heightCm ?? this.userProfile().heightCm,
+            startWeight: data.startWeight ?? this.userProfile().startWeight,
+            currentWeight: data.currentWeight ?? this.userProfile().currentWeight,
+            goalWeight: data.goalWeight ?? this.userProfile().goalWeight,
+            activityLevel: data.activityLevel ?? this.userProfile().activityLevel,
+            calorieGoalOverride: data.calorieGoalOverride ?? this.userProfile().calorieGoalOverride,
+            proteinGoalOverride: data.proteinGoalOverride ?? this.userProfile().proteinGoalOverride,
+            waterGoal: data.waterGoal ?? this.userProfile().waterGoal,
+          });
+          if (Array.isArray(data.recentFoods)) {
+            this.recentFoods.set(data.recentFoods.slice(0, 15));
+          }
+        },
+        error: (err) => console.error('Error al recuperar perfil de Mongo', err)
+      });
+  }
+
+  private pullHistoryFromMongo() {
+    const user = this.authService.currentUser();
+    if (!user || user.id === 'offline_mode') return;
+
+    this.http.get<any>(`${environment.apiUrl}/entries/range?userId=${user.id}&days=30`)
+      .subscribe({
+        next: (res) => {
+          const entries = res?.data ?? [];
+          if (!Array.isArray(entries)) return;
+
+          const mappedHistory: DayLog[] = entries.map((entry: any) => ({
+            date: entry.date?.split('T')[0] ?? entry.date,
+            meals: Array.isArray(entry.meals) ? entry.meals : [],
+            waterGlasses: entry.waterGlasses ?? 0,
+          }));
+
+          if (mappedHistory.length > 0) {
+            this.history.set(mappedHistory);
+            localStorage.setItem('day_history', JSON.stringify(mappedHistory));
+          }
+        },
+        error: (err) => console.error('Error al recuperar historial de Mongo', err)
       });
   }
 

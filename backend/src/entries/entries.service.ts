@@ -21,4 +21,12 @@ export class EntriesService {
     const parsedDate = new Date(date + 'T00:00:00.000Z');
     return this.entryModel.findOne({ date: parsedDate, user: userId });
   }
+
+  async getRecentEntries(userId: string, days = 30) {
+    return this.entryModel
+      .find({ user: userId })
+      .sort({ date: -1 })
+      .limit(days)
+      .lean();
+  }
 }
