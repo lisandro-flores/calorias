@@ -43,6 +43,10 @@ export const routes: Routes = [
     loadComponent: () => import('./components/landing.component').then(m => m.LandingComponent),
   },
   {
+    path: 'onboarding',
+    loadComponent: () => import('./components/onboarding.component').then(m => m.OnboardingComponent),
+  },
+  {
     path: '',
     redirectTo: 'landing',
     pathMatch: 'full',

@@ -332,6 +332,15 @@ export class LandingComponent implements OnInit {
   }
 
   goToLogin() {
+    // Open onboarding first for new users
+    try {
+      const seen = localStorage.getItem('onboardingSeen');
+      if (!seen) {
+        this.router.navigate(['/onboarding']);
+        return;
+      }
+    } catch (e) {}
+
     this.router.navigate(['/login']);
   }
 }
