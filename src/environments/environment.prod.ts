@@ -1,4 +1,5 @@
 export const environment = {
   production: true,
-  apiUrl: 'https://calorias-ktew.onrender.com' // <-- Actualiza esto con tu URL de Render/Railway
+  apiUrl: 'https://calorias-ktew.onrender.com',
+  googleClientId: '96118425924-fia28il69d3ng7m7o3at72led0oisd7b.apps.googleusercontent.com'
 };

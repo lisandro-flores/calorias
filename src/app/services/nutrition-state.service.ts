@@ -178,6 +178,7 @@ export class NutritionStateService {
   private toastCtrl = inject(ToastController);
   private syncTimeout: any;
   private profileSyncTimeout: any;
+  private isSyncing = false;
 
   constructor() {
     this.pullFromMongo();
@@ -196,23 +197,41 @@ export class NutritionStateService {
       const m = this.meals();
       localStorage.setItem(`meals_${this.todayKey}`, JSON.stringify(m));
       this.saveTodayToHistory();
-      this.syncToMongo();
+      if (!this.isSyncing) {
+        this.syncToMongo();
+      }
     });
     effect(() => {
       const w = this.waterGlasses();
       localStorage.setItem(`water_${this.todayKey}`, JSON.stringify(w));
-      this.syncToMongo();
+      if (!this.isSyncing) {
+        this.syncToMongo();
+      }
     });
     effect(() => {
       const profile = this.userProfile();
       localStorage.setItem('user_profile', JSON.stringify(profile));
-      this.syncProfileToMongo();
+      if (!this.isSyncing) {
+        this.syncProfileToMongo();
+      }
     });
     effect(() => {
       const recent = this.recentFoods().slice(0, 15);
       localStorage.setItem('recent_foods', JSON.stringify(recent));
-      this.syncProfileToMongo();
+      if (!this.isSyncing) {
+        this.syncProfileToMongo();
+      }
     });
+  }
+
+  /** Verifica si la fecha cambió (ej. la app estuvo abierta pasada la medianoche) */
+  checkDateChange() {
+    const newKey = this.getDateKey(new Date());
+    if (newKey !== this.todayKey) {
+      this.todayKey = newKey;
+      this.meals.set(this.loadTodayMeals());
+      this.waterGlasses.set(this.loadTodayWater());
+    }
   }
 
   private syncProfileToMongo() {
@@ -278,12 +297,15 @@ export class NutritionStateService {
       .subscribe({
         next: (res) => {
           if (res.success && res.data) {
+            this.isSyncing = true;
             if (res.data.meals && res.data.meals.length > 0) {
               this.meals.set(res.data.meals);
             }
             if (res.data.waterGlasses !== undefined) {
               this.waterGlasses.set(res.data.waterGlasses);
             }
+            // Defer unsetting flag so Angular processes signal effects first
+            setTimeout(() => this.isSyncing = false, 0);
           }
         },
         error: (err) => console.error('Error al recuperar datos de Mongo', err)
@@ -300,6 +322,7 @@ export class NutritionStateService {
           const data = res?.data ?? res;
           if (!data) return;
 
+          this.isSyncing = true;
           this.userProfile.set({
             ...this.userProfile(),
             displayName: data.displayName ?? data.name ?? this.userProfile().displayName,
@@ -317,6 +340,7 @@ export class NutritionStateService {
           if (Array.isArray(data.recentFoods)) {
             this.recentFoods.set(data.recentFoods.slice(0, 15));
           }
+          setTimeout(() => this.isSyncing = false, 0);
         },
         error: (err) => console.error('Error al recuperar perfil de Mongo', err)
       });

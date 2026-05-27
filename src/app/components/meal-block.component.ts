@@ -21,7 +21,7 @@ import { FoodItem, NutritionStateService } from '../services/nutrition-state.ser
       </div>
 
       <!-- Expanded Content -->
-      <div class="meal-body" *ngIf="expanded" @slideIn>
+      <div class="meal-body" *ngIf="expanded">
         <!-- Food list -->
         <div class="food-row" *ngFor="let food of foods">
           <span class="food-emoji">{{ food.emoji || '🍽️' }}</span>

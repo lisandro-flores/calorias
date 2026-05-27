@@ -24,8 +24,8 @@ export interface UpdateUserProfileDto {
 export class AuthService {
   private googleClient: OAuth2Client;
   
-  // EL MISMO CLIENT ID QUE CONFIGURASTE EN ANGULAR
-  private readonly GOOGLE_CLIENT_ID = '96118425924-fia28il69d3ng7m7o3at72led0oisd7b.apps.googleusercontent.com';
+  private readonly GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID
+    || '96118425924-fia28il69d3ng7m7o3at72led0oisd7b.apps.googleusercontent.com';
 
   constructor(@InjectModel(User.name) private userModel: Model<UserDocument>) {
     this.googleClient = new OAuth2Client(this.GOOGLE_CLIENT_ID);
@@ -82,7 +82,10 @@ export class AuthService {
       }
 
       // Generar un JWT propio para sesión (mejor control de expiración/revocación)
-      const secret = process.env.JWT_SECRET || 'dev_jwt_secret';
+      const secret = process.env.JWT_SECRET;
+      if (!secret) {
+        throw new Error('JWT_SECRET no está configurado en las variables de entorno');
+      }
       const jwtToken = jwt.sign(
         { sub: user._id.toString(), email: user.email },
         secret,

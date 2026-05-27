@@ -13,7 +13,7 @@ import { PwaService } from '../services/pwa.service';
         <ion-icon name="download-outline" class="pwa-icon"></ion-icon>
         <div class="pwa-text">
           <strong>Instalar App</strong>
-          <span>Añade Calorías a tu pantalla de inicio para acceso rápido y modo sin conexión.</span>
+          <span>Añade FuelSmart a tu pantalla de inicio para acceso rápido y modo sin conexión.</span>
         </div>
       </div>
       <div class="pwa-actions">

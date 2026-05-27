@@ -89,6 +89,10 @@ import { AiInputComponent } from './ai-input.component';
 export class DashboardComponent {
   state = inject(NutritionStateService);
 
+  ionViewDidEnter() {
+    this.state.checkDateChange();
+  }
+
   onCopyYesterday(mealName: string) {
     this.state.copyFromYesterday(mealName);
   }

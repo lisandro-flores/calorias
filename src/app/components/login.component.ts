@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { IonicModule } from '@ionic/angular';
 import { Router } from '@angular/router';
 import { AuthService } from '../services/auth.service';
+import { environment } from '../../environments/environment';
 
 declare var google: any;
 
@@ -16,8 +17,8 @@ declare var google: any;
         <!-- Brand -->
         <div class="brand">
           <ion-icon class="brand-icon" name="flame"></ion-icon>
-          <h1>Calorías</h1>
-          <p class="tagline">Tu contador minimalista</p>
+          <h1>FuelSmart</h1>
+          <p class="tagline">Tu nutrición, simplificada</p>
         </div>
 
         <!-- Auth Section -->
@@ -111,7 +112,7 @@ export class LoginComponent implements OnInit {
     if (typeof google === 'undefined' || !google.accounts) return;
 
     google.accounts.id.initialize({
-      client_id: '96118425924-fia28il69d3ng7m7o3at72led0oisd7b.apps.googleusercontent.com',
+      client_id: environment.googleClientId,
       callback: this.handleCredentialResponse.bind(this)
     });
 

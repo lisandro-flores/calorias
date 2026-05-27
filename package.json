@@ -1,8 +1,8 @@
 {
-  "name": "tmp-app",
-  "version": "0.0.1",
-  "author": "Ionic Framework",
-  "homepage": "https://ionicframework.com/",
+  "name": "fuelsmart",
+  "version": "1.0.0",
+  "author": "Lisandro",
+  "homepage": "https://fuelsmart.app",
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
@@ -32,7 +32,6 @@
     "@capacitor/status-bar": "8.0.2",
     "@ionic/angular": "^8.0.0",
     "ionicons": "^7.0.0",
-    "realm-web": "^2.0.1",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0",
     "zone.js": "~0.15.0"
@@ -64,9 +63,8 @@
     "karma-coverage": "~2.2.0",
     "karma-jasmine": "~5.1.0",
     "karma-jasmine-html-reporter": "~2.1.0",
+    "playwright": "^1.41.0",
     "typescript": "~5.9.0"
-  ,
-    "playwright": "^1.41.0"
   },
-  "description": "An Ionic project"
+  "description": "FuelSmart — Tu contador de calorías minimalista con IA"
 }

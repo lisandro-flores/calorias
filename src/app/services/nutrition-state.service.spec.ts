@@ -1,4 +1,6 @@
 import { TestBed } from '@angular/core/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { NutritionStateService } from './nutrition-state.service';
 
 describe('NutritionStateService', () => {
@@ -6,14 +8,18 @@ describe('NutritionStateService', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [NutritionStateService]
+      providers: [
+        NutritionStateService,
+        provideHttpClient(),
+        provideHttpClientTesting(),
+      ]
     });
     service = TestBed.inject(NutritionStateService);
   });
 
   it('should format default state correctly', () => {
     expect(service.waterGlasses()).toBe(0);
-    expect(service.meals().length).toBe(3);
+    expect(service.meals().length).toBe(4);
     expect(service.totalCalories()).toBe(0);
   });
 
