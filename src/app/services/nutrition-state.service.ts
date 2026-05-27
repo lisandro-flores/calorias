@@ -4,6 +4,7 @@ import { AuthService } from './auth.service';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../environments/environment';
 import { ToastController } from '@ionic/angular';
+import { OutboxService } from './outbox.service';
 
 export interface FoodItem {
   id: string;
@@ -196,6 +197,7 @@ export class NutritionStateService {
   private http = inject(HttpClient);
   private authService = inject(AuthService);
   private toastCtrl = inject(ToastController);
+  private outbox = inject(OutboxService);
   private document = inject(DOCUMENT);
   private syncTimeout: any;
   private profileSyncTimeout: any;
@@ -210,6 +212,16 @@ export class NutritionStateService {
     this.pullProfileFromMongo(true);
     this.pullHistoryFromMongo(true);
     this.scheduleNextDateCheck();
+
+    // reflect outbox pending items in sync status
+    this.outbox.pending$.subscribe(n => {
+      if (this.isHydrating) return;
+      if (n > 0) {
+        this.syncStatus.set('pending');
+      } else if (n === 0 && this.syncStatus() !== 'error') {
+        this.syncStatus.set('synced');
+      }
+    });
 
     if (typeof window !== 'undefined') {
       window.addEventListener('focus', this.handleVisibilityOrFocusChange);
@@ -345,16 +357,13 @@ export class NutritionStateService {
     const profile = this.userProfile();
 
     this.profileSyncTimeout = setTimeout(() => {
-      this.http.patch(`${environment.apiUrl}/auth/profile`, {
+      // enqueue profile update to outbox instead of posting directly
+      this.outbox.enqueue('profile-sync', {
         userId: user.id,
         profile,
         recentFoods: this.recentFoods().slice(0, 15),
-      }).subscribe({
-        next: () => {
-          console.log('Perfil sincronizado con MongoDB');
-        },
-        error: (err) => console.error('Error sincronizando perfil con MongoDB', err)
       });
+      this.syncStatus.set('pending');
     }, 1500);
   }
 
@@ -370,31 +379,15 @@ export class NutritionStateService {
     }
 
     this.syncTimeout = setTimeout(() => {
-      this.syncStatus.set('syncing');
-      this.http.post(`${environment.apiUrl}/entries/sync`, {
+      // enqueue entry sync to outbox for reliable delivery
+      this.outbox.enqueue('entry-sync', {
         userId: user.id,
         date: this.todayKey,
         meals: this.meals(),
         waterGlasses: this.waterGlasses(),
         clientUpdatedAt: this.getTodayClientUpdatedAt(),
-      }).subscribe({
-        next: async () => {
-          this.syncStatus.set('synced');
-          console.log('Sincronizado con MongoDB');
-          const toast = await this.toastCtrl.create({
-            message: 'Respaldado en la nube',
-            duration: 1500,
-            position: 'bottom',
-            color: 'dark',
-            icon: 'cloud-done-outline'
-          });
-          toast.present();
-        },
-        error: (err) => {
-          this.syncStatus.set('error');
-          console.error('Error sincronizando con MongoDB', err);
-        }
       });
+      this.syncStatus.set('pending');
     }, 2500);
   }
 

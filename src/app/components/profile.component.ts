@@ -6,11 +6,12 @@ import { Router } from '@angular/router';
 import { AuthService } from '../services/auth.service';
 import { NutritionStateService, ActivityLevel } from '../services/nutrition-state.service';
 import { HealthConnectService } from '../services/health-connect.service';
+import { OutboxPanelComponent } from './outbox-panel.component';
 
 @Component({
   selector: 'app-profile',
   standalone: true,
-  imports: [CommonModule, IonicModule, FormsModule],
+  imports: [CommonModule, IonicModule, FormsModule, OutboxPanelComponent],
   template: `
     <ion-content class="ion-padding">
 
@@ -213,6 +214,9 @@ import { HealthConnectService } from '../services/health-connect.service';
         <ion-icon name="log-out-outline"></ion-icon>
         Cerrar sesión
       </button>
+
+      <div class="section-label">Sincronización</div>
+      <app-outbox-panel></app-outbox-panel>
 
       <div style="height:30px"></div>
     </ion-content>
