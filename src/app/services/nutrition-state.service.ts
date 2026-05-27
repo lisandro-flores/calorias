@@ -102,6 +102,10 @@ export class NutritionStateService {
   history = signal<DayLog[]>(this.loadHistory());
   syncStatus = signal<SyncStatus>('synced');
 
+  // ─── Hydration state (Fase 1) ───
+  dataReady = signal<boolean>(false);
+  dataSource = signal<'cloud' | 'local' | 'loading'>('loading');
+
   syncStatusLabel = computed(() => {
     const status = this.syncStatus();
     if (status === 'pending') return 'Pendiente';
@@ -213,6 +217,20 @@ export class NutritionStateService {
     this.pullHistoryFromMongo(true);
     this.scheduleNextDateCheck();
 
+    // Timeout fallback: if hydration hasn't finished in 5s, use local data (Fase 1)
+    setTimeout(() => {
+      if (this.isHydrating) {
+        console.warn('Cloud hydration timed out, falling back to local data');
+        this.isHydrating = false;
+        this.dataReady.set(true);
+        this.dataSource.set('local');
+        // Reload local data as fallback
+        this.meals.set(this.loadTodayMealsFromLocal());
+        this.waterGlasses.set(this.loadTodayWaterFromLocal());
+        this.userProfile.set(this.loadProfileFromLocal());
+      }
+    }, 5000);
+
     // reflect outbox pending items in sync status
     this.outbox.pending$.subscribe(n => {
       if (this.isHydrating) return;
@@ -250,6 +268,8 @@ export class NutritionStateService {
 
     effect(() => {
       const m = this.meals();
+      // Fase 2: guard — don't persist until cloud is ready
+      if (!this.dataReady()) return;
       localStorage.setItem(`meals_${this.todayKey}`, JSON.stringify(m));
       this.saveTodayToHistory();
       if (!this.isSyncing && !this.isHydrating) {
@@ -258,6 +278,8 @@ export class NutritionStateService {
     });
     effect(() => {
       const w = this.waterGlasses();
+      // Fase 2: guard — don't persist until cloud is ready
+      if (!this.dataReady()) return;
       localStorage.setItem(`water_${this.todayKey}`, JSON.stringify(w));
       if (!this.isSyncing && !this.isHydrating) {
         this.syncToMongo();
@@ -265,6 +287,8 @@ export class NutritionStateService {
     });
     effect(() => {
       const profile = this.userProfile();
+      // Fase 2: guard — don't persist until cloud is ready
+      if (!this.dataReady()) return;
       localStorage.setItem('user_profile', JSON.stringify(profile));
       if (!this.isSyncing && !this.isHydrating) {
         this.syncProfileToMongo();
@@ -272,6 +296,8 @@ export class NutritionStateService {
     });
     effect(() => {
       const recent = this.recentFoods().slice(0, 15);
+      // Fase 2: guard — don't persist until cloud is ready
+      if (!this.dataReady()) return;
       localStorage.setItem('recent_foods', JSON.stringify(recent));
       if (!this.isSyncing && !this.isHydrating) {
         this.syncProfileToMongo();
@@ -320,6 +346,8 @@ export class NutritionStateService {
     this.initialHydrationStepsRemaining = Math.max(0, this.initialHydrationStepsRemaining - 1);
     if (this.initialHydrationStepsRemaining === 0) {
       this.isHydrating = false;
+      this.dataReady.set(true);
+      this.dataSource.set('cloud');
     }
   }
 
@@ -697,6 +725,44 @@ export class NutritionStateService {
 
   private getDateKey(date: Date): string {
     return date.toISOString().split('T')[0];
+  }
+
+  // ─── Fallback methods for local-only load (Fase 1) ───
+  private loadTodayMealsFromLocal(): Meal[] {
+    try {
+      const stored = localStorage.getItem(`meals_${this.todayKey}`);
+      if (stored) return JSON.parse(stored);
+    } catch (e) {}
+    return DEFAULT_MEALS.map(m => ({ ...m, foods: [] }));
+  }
+
+  private loadTodayWaterFromLocal(): number {
+    try {
+      const stored = localStorage.getItem(`water_${this.todayKey}`);
+      if (stored) return JSON.parse(stored);
+    } catch (e) {}
+    return 0;
+  }
+
+  private loadProfileFromLocal(): UserProfile {
+    try {
+      const stored = localStorage.getItem('user_profile');
+      if (stored) return JSON.parse(stored);
+      const oldGoals = localStorage.getItem('user_goals');
+      if (oldGoals) {
+        const g = JSON.parse(oldGoals);
+        return {
+          ...DEFAULT_PROFILE,
+          startWeight: g.startWeight ?? DEFAULT_PROFILE.startWeight,
+          currentWeight: g.currentWeight ?? DEFAULT_PROFILE.currentWeight,
+          goalWeight: g.goalWeight ?? DEFAULT_PROFILE.goalWeight,
+          calorieGoalOverride: g.calorieGoal ?? null,
+          proteinGoalOverride: g.proteinGoal ?? null,
+          waterGoal: g.waterGoal ?? DEFAULT_PROFILE.waterGoal,
+        };
+      }
+    } catch (e) {}
+    return { ...DEFAULT_PROFILE };
   }
 
   private loadTodayMeals(): Meal[] {

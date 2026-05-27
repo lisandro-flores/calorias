@@ -29,47 +29,91 @@ import { HealthConnectService } from '../services/health-connect.service';
   ],
   template: `
     <ion-content class="ion-padding" [scrollY]="true">
-      <div class="top-row">
-        <div class="sync-badge" [ngClass]="state.syncStatus()">
-          <ion-icon [name]="state.syncStatusIcon()"></ion-icon>
-          <span>{{ state.syncStatusLabel() }}</span>
-        </div>
+      <!-- Fase 1: Hydration overlay -->
+      <div class="hydration-overlay" *ngIf="!state.dataReady()">
+        <ion-spinner name="crescent"></ion-spinner>
+        <span>Cargando datos desde la nube...</span>
       </div>
 
-      <!-- Hero ring + macros -->
-      <app-hero-summary></app-hero-summary>
+      <!-- Main content (only when dataReady) -->
+      <div *ngIf="state.dataReady()">
+        <div class="top-row">
+          <div class="sync-badge" [ngClass]="state.syncStatus()">
+            <ion-icon [name]="state.syncStatusIcon()"></ion-icon>
+            <span>{{ state.syncStatusLabel() }}</span>
+          </div>
+        </div>
 
-      <!-- Health Connect activity -->
-      <app-activity-card></app-activity-card>
+        <!-- Fase 1: Local data banner -->
+        <div class="local-data-banner" *ngIf="state.dataSource() === 'local'">
+          <ion-icon name="cloud-offline-outline"></ion-icon>
+          <span>Mostrando datos locales — sin conexión a la nube</span>
+        </div>
 
-      <!-- AI Input -->
-      <app-ai-input></app-ai-input>
+        <!-- Hero ring + macros -->
+        <app-hero-summary></app-hero-summary>
 
-      <!-- Food search -->
-      <app-food-search></app-food-search>
+        <!-- Health Connect activity -->
+        <app-activity-card></app-activity-card>
 
-      <!-- Recent foods chips -->
-      <app-recent-foods></app-recent-foods>
+        <!-- AI Input -->
+        <app-ai-input></app-ai-input>
 
-      <!-- Meals -->
-      <app-meal-block
-        *ngFor="let meal of state.meals()"
-        [mealName]="meal.name"
-        [mealIcon]="meal.icon"
-        [foods]="meal.foods"
-        (copyYesterday)="onCopyYesterday(meal.name)">
-      </app-meal-block>
+        <!-- Food search -->
+        <app-food-search></app-food-search>
 
-      <!-- Water -->
-      <app-water-tracker></app-water-tracker>
+        <!-- Recent foods chips -->
+        <app-recent-foods></app-recent-foods>
 
-      <!-- Weight goal -->
-      <app-goal-progress></app-goal-progress>
+        <!-- Meals -->
+        <app-meal-block
+          *ngFor="let meal of state.meals()"
+          [mealName]="meal.name"
+          [mealIcon]="meal.icon"
+          [foods]="meal.foods"
+          (copyYesterday)="onCopyYesterday(meal.name)">
+        </app-meal-block>
 
-      <div class="footer-space"></div>
+        <!-- Water -->
+        <app-water-tracker></app-water-tracker>
+
+        <!-- Weight goal -->
+        <app-goal-progress></app-goal-progress>
+
+        <div class="footer-space"></div>
+      </div>
     </ion-content>
   `,
   styles: [`
+    .hydration-overlay {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 60vh;
+      gap: 16px;
+      color: var(--app-muted);
+      font-size: 14px;
+    }
+
+    .local-data-banner {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 14px;
+      background: rgba(251, 191, 36, 0.1);
+      border: 1px solid rgba(251, 191, 36, 0.2);
+      border-radius: 12px;
+      color: #fbbf24;
+      font-size: 12px;
+      margin-bottom: 12px;
+      font-weight: 500;
+    }
+
+    .local-data-banner ion-icon {
+      font-size: 14px;
+    }
+
     .top-row {
       display: flex;
       justify-content: flex-end;
