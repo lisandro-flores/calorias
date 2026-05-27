@@ -24,7 +24,7 @@ import { FoodItem, NutritionStateService } from '../services/nutrition-state.ser
       <div class="meal-body" *ngIf="expanded">
         <!-- Food list -->
         <div class="food-row" *ngFor="let food of foods">
-          <span class="food-emoji">{{ food.emoji || '🍽️' }}</span>
+          <ion-icon class="food-icon" [name]="food.icon || 'restaurant'"></ion-icon>
           <div class="food-info">
             <span class="food-name">{{ food.name }}</span>
             <span class="food-portion">{{ food.portion }}</span>
@@ -105,11 +105,12 @@ import { FoodItem, NutritionStateService } from '../services/nutrition-state.ser
     .food-row:last-of-type {
       border-bottom: none;
     }
-    .food-emoji {
+    .food-icon {
       width: 24px;
       text-align: center;
-      font-size: 18px;
+      font-size: 20px;
       flex-shrink: 0;
+      color: var(--app-accent);
     }
     .food-info {
       display: flex;

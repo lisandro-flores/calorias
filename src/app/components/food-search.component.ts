@@ -57,7 +57,7 @@ import { NutritionStateService } from '../services/nutrition-state.service';
             <div class="portion-thumb" *ngIf="selectedProduct()!.image_front_url">
               <img [src]="selectedProduct()!.image_front_url" alt="" />
             </div>
-            <div class="portion-thumb emoji" *ngIf="!selectedProduct()!.image_front_url">📦</div>
+            <div class="portion-thumb icon" *ngIf="!selectedProduct()!.image_front_url"><ion-icon name="nutrition"></ion-icon></div>
             <div class="portion-title-area">
               <span class="portion-product-name">{{ selectedProduct()!.product_name || 'Alimento' }}</span>
               <span class="portion-base-info">Valores por 100g</span>
@@ -180,7 +180,7 @@ import { NutritionStateService } from '../services/nutrition-state.service';
     }
     .portion-thumb { width: 48px; height: 48px; border-radius: 12px; overflow: hidden; flex-shrink: 0; }
     .portion-thumb img { width: 100%; height: 100%; object-fit: cover; }
-    .portion-thumb.emoji { display: flex; align-items: center; justify-content: center; font-size: 26px; background: var(--app-bg); }
+    .portion-thumb.icon { display: flex; align-items: center; justify-content: center; font-size: 26px; background: var(--app-bg); color: var(--app-accent); }
     .portion-title-area { display: flex; flex-direction: column; gap: 3px; }
     .portion-product-name { font-size: 15px; font-weight: 600; color: var(--app-text); }
     .portion-base-info { font-size: 11px; color: var(--app-muted); }
@@ -344,7 +344,7 @@ export class FoodSearchComponent implements OnDestroy {
         this.nutritionState.addFoodToMeal(meal.name, {
           id: product.code + '_' + Date.now(),
           name: product.product_name || 'Alimento',
-          emoji: '📦',
+          icon: 'nutrition',
           portion: `${this.portionGrams} g`,
           calories: Math.round(this.calcKcal()),
           protein: Math.round(this.calcProtein()),

@@ -49,7 +49,7 @@ import { NutritionStateService } from '../services/nutrition-state.service';
           <div class="results-title">{{ results().length }} alimento{{ results().length > 1 ? 's' : '' }} detectado{{ results().length > 1 ? 's' : '' }}</div>
 
           <div class="result-item" *ngFor="let food of results()">
-            <span class="result-emoji">{{ food.emoji || '🍽️' }}</span>
+            <ion-icon class="result-icon" [name]="food.icon || 'restaurant'"></ion-icon>
             <div class="result-info">
               <span class="result-name">{{ food.name }}</span>
               <span class="result-detail">{{ food.portion }} · {{ food.calories }} kcal · P: {{ food.protein }}g</span>
@@ -247,7 +247,8 @@ import { NutritionStateService } from '../services/nutrition-state.service';
     .result-item:last-of-type {
       border-bottom: none;
     }
-    .result-emoji {
+    .result-icon {
+      color: var(--app-accent);
       font-size: 22px;
       width: 28px;
       text-align: center;

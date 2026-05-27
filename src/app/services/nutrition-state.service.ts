@@ -7,7 +7,7 @@ import { ToastController } from '@ionic/angular';
 export interface FoodItem {
   id: string;
   name: string;
-  emoji: string;
+  icon: string;
   portion: string;
   calories: number;
   protein?: number;
@@ -411,7 +411,7 @@ export class NutritionStateService {
     const food: FoodItem = {
       id: Date.now().toString() + Math.random().toString(36).substr(2, 4),
       name,
-      emoji: 'restaurant-outline',
+      icon: 'restaurant-outline',
       portion: `${calories} kcal`,
       calories: Math.round(calories),
       protein: Math.round(protein),

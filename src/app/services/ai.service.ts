@@ -10,7 +10,7 @@ export interface AiFoodItem {
   protein: number;
   carbs: number;
   fat: number;
-  emoji: string;
+  icon: string;
 }
 
 import { environment } from '../../environments/environment';

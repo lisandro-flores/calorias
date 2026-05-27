@@ -9,7 +9,7 @@ export type UserActivityLevel = 'sedentary' | 'light' | 'moderate' | 'active' | 
 export interface RecentFoodItem {
   id: string;
   name: string;
-  emoji: string;
+  icon: string;
   portion: string;
   calories: number;
   protein?: number;

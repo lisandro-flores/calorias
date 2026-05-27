@@ -13,7 +13,7 @@ export class FoodItem {
   name: string;
 
   @Prop()
-  emoji: string;
+  icon: string;
 
   @Prop()
   portion: string;

@@ -8,7 +8,8 @@ export interface ParsedFoodItem {
   protein: number;
   carbs: number;
   fat: number;
-  emoji: string;
+  fat: number;
+  icon: string;
 }
 
 // --- CONFIGURACIÓN IA (Inspirada en el modelo propuesto) ---
@@ -86,12 +87,12 @@ export class AiService {
                   type: Type.INTEGER,
                   description: 'Gramos de grasa estimados',
                 },
-                emoji: {
+                icon: {
                   type: Type.STRING,
-                  description: 'Un emoji representativo del alimento (solo 1)',
+                  description: 'Un nombre de icono válido de Ionicons representativo del alimento (ej: restaurant, fast-food, nutrition, pizza, fish, egg, water, cafe, etc.).',
                 },
               },
-              required: ['name', 'portion', 'calories', 'protein', 'carbs', 'fat', 'emoji'],
+              required: ['name', 'portion', 'calories', 'protein', 'carbs', 'fat', 'icon'],
             },
           },
           systemInstruction: PARSE_MEAL_SYSTEM_INSTRUCTION,
