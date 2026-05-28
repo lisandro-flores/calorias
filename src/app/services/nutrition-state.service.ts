@@ -106,6 +106,9 @@ export class NutritionStateService {
   dataReady = signal<boolean>(false);
   dataSource = signal<'cloud' | 'local' | 'loading'>('loading');
 
+  // ─── Fase 3: Entry version for conflict detection ───
+  currentEntryVersion = signal<number>(0);
+
   syncStatusLabel = computed(() => {
     const status = this.syncStatus();
     if (status === 'pending') return 'Pendiente';
@@ -407,13 +410,14 @@ export class NutritionStateService {
     }
 
     this.syncTimeout = setTimeout(() => {
-      // enqueue entry sync to outbox for reliable delivery
+      // enqueue entry sync to outbox for reliable delivery (Fase 3: include expectedVersion)
       this.outbox.enqueue('entry-sync', {
         userId: user.id,
         date: this.todayKey,
         meals: this.meals(),
         waterGlasses: this.waterGlasses(),
         clientUpdatedAt: this.getTodayClientUpdatedAt(),
+        expectedVersion: this.currentEntryVersion(), // Fase 3
       });
       this.syncStatus.set('pending');
     }, 2500);
@@ -442,6 +446,10 @@ export class NutritionStateService {
             }
             if (res.data.waterGlasses !== undefined) {
               this.waterGlasses.set(res.data.waterGlasses);
+            }
+            // Fase 3: track version for conflict detection
+            if (res.data.version !== undefined) {
+              this.currentEntryVersion.set(res.data.version);
             }
             // Defer unsetting flag so Angular processes signal effects first
             setTimeout(() => this.isSyncing = false, 0);

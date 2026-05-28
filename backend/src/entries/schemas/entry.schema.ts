@@ -48,6 +48,10 @@ export class Entry {
   @Prop({ type: Date })
   clientUpdatedAt?: Date;
 
+  // ─── Fase 3: Version for conflict detection and merge ───
+  @Prop({ default: 0 })
+  version: number;
+
   @Prop({ type: [{ name: String, foods: [SchemaFactory.createForClass(FoodItem)] }] })
   meals: { name: string; foods: FoodItem[] }[];
 }

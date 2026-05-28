@@ -14,17 +14,24 @@ export class EntriesController {
       meals: any[];
       waterGlasses: number;
       clientUpdatedAt?: string;
+      expectedVersion?: number; // Fase 3
     },
   ) {
     if (!body.userId) return { success: false, message: 'Missing userId' };
-    const saved = await this.entriesService.saveEntry(
+    const result = await this.entriesService.saveEntry(
       body.userId,
       body.date,
       body.meals,
       body.waterGlasses,
       body.clientUpdatedAt,
+      body.expectedVersion, // Fase 3
     );
-    return { success: true, data: saved };
+    return {
+      success: true,
+      data: result.entry,
+      merged: result.merged, // Fase 3: flag indicating if merge happened
+      version: result.entry?.version ?? 0,
+    };
   }
 
   @Get('day')
