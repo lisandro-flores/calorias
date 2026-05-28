@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { BehaviorSubject } from 'rxjs';
+import { BehaviorSubject, Subject } from 'rxjs';
 import { environment } from '../../environments/environment';
 
 export type OutboxItemType = 'entry-sync' | 'profile-sync';
@@ -21,6 +21,7 @@ const STORAGE_KEY = 'outbox_v1';
 export class OutboxService {
   private queue: OutboxItem[] = [];
   public pending$ = new BehaviorSubject<number>(0);
+  public syncComplete$ = new Subject<{ type: OutboxItemType; payload: any }>();
   private processing = false;
 
   constructor(private http: HttpClient) {
@@ -50,7 +51,36 @@ export class OutboxService {
     this.pending$.next(this.queue.filter(i => i.status === 'pending' || i.status === 'in-flight').length);
   }
 
+  private getDedupeKey(type: OutboxItemType, payload: any): string {
+    // For entry-sync, dedupe by type + date (one entry per day)
+    if (type === 'entry-sync' && payload.date) {
+      return `${type}:${payload.date}`;
+    }
+    // For others, just use type
+    return type;
+  }
+
   enqueue(type: OutboxItemType, payload: any) {
+    const dedupeKey = this.getDedupeKey(type, payload);
+    
+    // Check if already queued (pending or failed)
+    const existing = this.queue.find(
+      i => this.getDedupeKey(i.type, i.payload) === dedupeKey && 
+           (i.status === 'pending' || i.status === 'failed')
+    );
+
+    if (existing) {
+      // Replace payload (deduplication: newer edit replaces older)
+      existing.payload = payload;
+      existing.createdAt = new Date().toISOString();
+      existing.attempts = 0; // Reset attempts on update
+      existing.status = 'pending';
+      this.save();
+      this.processQueue();
+      return existing.id;
+    }
+
+    // New item
     const item: OutboxItem = {
       id: `${Date.now()}-${Math.random().toString(36).slice(2,8)}`,
       type,
@@ -91,6 +121,7 @@ export class OutboxService {
             await this.http.post(`${environment.apiUrl}/auth/profile`, item.payload).toPromise();
           }
           item.status = 'done';
+          this.syncComplete$.next({ type: item.type, payload: item.payload });
         } catch (err) {
           console.error('Outbox item failed', item.id, err);
           item.status = item.attempts >= 5 ? 'failed' : 'pending';

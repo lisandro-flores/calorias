@@ -252,6 +252,14 @@ export class NutritionStateService {
 
     this.document.addEventListener('visibilitychange', this.handleVisibilityOrFocusChange);
 
+    // Fase 5: Re-fetch post-push — when entry-sync completes, pull fresh data
+    this.outbox.syncComplete$.subscribe(event => {
+      if (event.type === 'entry-sync' && !this.isHydrating) {
+        console.log('Entry sync completed, pulling fresh data from server...');
+        this.pullFromMongo();
+      }
+    });
+
     this.refreshInterval = setInterval(() => {
       const user = this.authService.currentUser();
       if (!user || user.id === 'offline_mode') return;
