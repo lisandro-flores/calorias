@@ -28,7 +28,7 @@ jobs:
         run: npx playwright install --with-deps
 
       - name: Start static server (serve www)
-        run: npx http-server -p 8080 www &
+        run: npx serve -s www -l 8080 &
 
       - name: Run Playwright tests
         run: npx playwright test --config=e2e/playwright.config.ts

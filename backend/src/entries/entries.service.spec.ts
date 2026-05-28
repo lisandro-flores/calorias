@@ -61,20 +61,22 @@ describe('EntriesService', () => {
 
       const result = await service.saveEntry(userId, date, meals, waterGlasses);
 
-      expect(result).toEqual(mockEntry);
+      expect(result.entry).toEqual(mockEntry);
+      expect(result.merged).toBe(false);
       expect(mockEntryModel.findOne).toHaveBeenCalledWith({
         date: new Date('2024-05-26T00:00:00.000Z'),
         user: userId,
       });
       expect(mockEntryModel.findOneAndUpdate).toHaveBeenCalledWith(
         { date: new Date('2024-05-26T00:00:00.000Z'), user: userId },
-        {
+        expect.objectContaining({
           meals,
           waterGlasses,
           date: new Date('2024-05-26T00:00:00.000Z'),
           user: userId,
           clientUpdatedAt: expect.any(Date),
-        },
+          version: expect.any(Number),
+        }),
         { upsert: true, new: true },
       );
     });
@@ -101,8 +103,9 @@ describe('EntriesService', () => {
 
       const result = await service.saveEntry(userId, date, newMeals, waterGlasses);
 
-      expect(result.meals).toEqual(newMeals);
-      expect(result.waterGlasses).toBe(5);
+      expect(result.entry.meals).toEqual(newMeals);
+      expect(result.entry.waterGlasses).toBe(5);
+      expect(result.merged).toBe(false);
     });
 
     it('should handle empty meals array', async () => {
@@ -119,7 +122,7 @@ describe('EntriesService', () => {
 
       const result = await service.saveEntry(userId, date, meals, waterGlasses);
 
-      expect(result.meals).toEqual([]);
+      expect(result.entry.meals).toEqual([]);
     });
 
     it('should parse date correctly in ISO format', async () => {
@@ -155,7 +158,8 @@ describe('EntriesService', () => {
 
       const result = await service.saveEntry(userId, date, meals, waterGlasses, staleTimestamp);
 
-      expect(result).toEqual(mockEntry);
+      expect(result.entry).toEqual(mockEntry);
+      expect(result.merged).toBe(false);
       expect(mockEntryModel.findOneAndUpdate).not.toHaveBeenCalled();
     });
   });
@@ -169,7 +173,9 @@ describe('EntriesService', () => {
 
       const result = await service.getEntry(userId, date);
 
-      expect(result).toEqual(mockEntry);
+      expect(result.entry).toEqual(mockEntry);
+      expect(result.merged).toBe(false);
+      expect(result.version).toBe(0);
       expect(mockEntryModel.findOne).toHaveBeenCalledWith({
         date: new Date('2024-05-26T00:00:00.000Z'),
         user: userId,
@@ -227,14 +233,16 @@ describe('EntriesService', () => {
           },
         ],
         waterGlasses: 5,
+        version: 1,
       };
 
       mockEntryModel.findOne.mockResolvedValue(fullEntry);
 
       const result = await service.getEntry(userId, date);
 
-      expect(result.meals.length).toBe(2);
-      expect(result.waterGlasses).toBe(5);
+      expect(result.entry.meals.length).toBe(2);
+      expect(result.entry.waterGlasses).toBe(5);
+      expect(result.version).toBe(1);
     });
   });
 });

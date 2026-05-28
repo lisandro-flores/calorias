@@ -61,17 +61,19 @@ describe('EntriesController', () => {
         waterGlasses: 3,
       };
 
-      jest.spyOn(service, 'saveEntry').mockResolvedValue(mockEntry);
+      jest.spyOn(service, 'saveEntry').mockResolvedValue({ entry: mockEntry, merged: false });
 
       const result = await controller.syncEntry(body);
 
       expect(result.success).toBe(true);
       expect(result.data).toEqual(mockEntry);
+      expect(result.merged).toBe(false);
       expect(service.saveEntry).toHaveBeenCalledWith(
         body.userId,
         body.date,
         body.meals,
         body.waterGlasses,
+        undefined,
         undefined,
       );
     });
@@ -87,13 +89,14 @@ describe('EntriesController', () => {
         waterGlasses: 5,
       };
 
-      const entryWithMeals = { ...mockEntry, meals: body.meals };
-      jest.spyOn(service, 'saveEntry').mockResolvedValue(entryWithMeals);
+      const entryWithMeals = { ...mockEntry, meals: body.meals, version: 1 };
+      jest.spyOn(service, 'saveEntry').mockResolvedValue({ entry: entryWithMeals, merged: false });
 
       const result = await controller.syncEntry(body);
 
       expect(result.success).toBe(true);
       expect(result.data.meals.length).toBe(2);
+      expect(result.merged).toBe(false);
     });
   });
 

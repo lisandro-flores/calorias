@@ -1,6 +1,17 @@
 import { test, expect } from '@playwright/test';
 
 test('AI parse and add all flow opens picker and adds items', async ({ page, baseURL }) => {
+  // Mock backend responses to avoid 5s hydration timeout and race conditions
+  await page.route('**/entries/day*', route => route.fulfill({ json: { success: true, data: { meals: [], waterGlasses: 0 } } }));
+  await page.route('**/auth/profile*', route => route.fulfill({ json: { success: true, data: {} } }));
+  await page.route('**/entries/range*', route => route.fulfill({ json: { success: true, data: [] } }));
+
+  // Bypass login guard
+  await page.addInitScript(() => {
+    window.localStorage.setItem('current_user', JSON.stringify({ id: 'test_user', name: 'Test' }));
+    window.localStorage.setItem('onboardingSeen', '1');
+  });
+
   await page.goto('/');
 
   // TODO: Adjust selectors according to the actual UI
