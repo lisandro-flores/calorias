@@ -501,25 +501,34 @@ export class AiInputComponent {
   async addAllToMeal(mealName: string) {
     const foods = this.pendingFoods.length > 0 ? this.pendingFoods : this.results();
 
-    foods.forEach(food => {
-      this.nutritionState.addFoodToMeal(mealName, {
-        id: Date.now().toString() + Math.random().toString(36).substr(2, 4),
-        name: food.name,
-        icon: food.icon,
-        portion: food.portion,
-        calories: food.calories,
-        protein: food.protein,
-        carbs: food.carbs,
-        fat: food.fat,
+    try {
+      foods.forEach(food => {
+        this.nutritionState.addFoodToMeal(mealName, {
+          id: Date.now().toString() + Math.random().toString(36).substr(2, 4),
+          name: food.name,
+          icon: food.icon,
+          portion: food.portion,
+          calories: food.calories,
+          protein: food.protein,
+          carbs: food.carbs,
+          fat: food.fat,
+        });
       });
-    });
 
-    await this.showSuccessToast(foods.length, mealName);
-    this.pendingFoods = [];
-    this.mealPickerOpen.set(false);
-    this.clearResults();
-    this.userText = '';
-    this.isOpen.set(false);
+      // Update UI first: close picker and clear inputs so user sees immediate result
+      this.pendingFoods = [];
+      this.mealPickerOpen.set(false);
+      this.clearResults();
+      this.userText = '';
+      this.isOpen.set(false);
+
+      // Fire-and-forget toast; do not block UI
+      this.showSuccessToast(foods.length, mealName).catch(() => {});
+    } catch (err) {
+      console.error('Error adding foods to meal', err);
+      this.errorMsg.set('No se pudieron agregar los alimentos. Intenta de nuevo.');
+      // keep the picker open for retry
+    }
   }
 
   cancelMealPicker() {
