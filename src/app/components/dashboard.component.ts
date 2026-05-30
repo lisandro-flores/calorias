@@ -61,8 +61,14 @@ import { HealthConnectService } from '../services/health-connect.service';
 
         <section class="section-block">
           <div class="section-label">Captura rápida</div>
-          <app-ai-input></app-ai-input>
-          <app-food-search></app-food-search>
+          <div class="quick-capture-row">
+            <app-ai-input></app-ai-input>
+            <button class="show-search-btn" (click)="showSearch = !showSearch">
+              <ion-icon name="search-outline"></ion-icon>
+              <span>{{ showSearch ? 'Ocultar búsqueda' : 'Buscar producto' }}</span>
+            </button>
+          </div>
+          <app-food-search *ngIf="showSearch"></app-food-search>
           <app-recent-foods></app-recent-foods>
         </section>
 
@@ -213,6 +219,7 @@ import { HealthConnectService } from '../services/health-connect.service';
 export class DashboardComponent {
   state = inject(NutritionStateService);
   health = inject(HealthConnectService);
+  showSearch = false;
 
   ionViewDidEnter() {
     this.state.checkDateChange();

@@ -17,7 +17,12 @@ import { FoodItem, NutritionStateService } from '../services/nutrition-state.ser
           <span class="meal-name">{{ mealName }}</span>
           <span class="meal-cals">{{ mealCalories() }} kcal</span>
         </div>
-        <ion-icon [name]="expanded ? 'chevron-up' : 'chevron-down'" class="expand-icon"></ion-icon>
+        <div class="header-actions">
+          <button class="header-add" (click)="$event.stopPropagation(); onQuickAdd()">
+            <ion-icon name="add-circle"></ion-icon>
+          </button>
+          <ion-icon [name]="expanded ? 'chevron-up' : 'chevron-down'" class="expand-icon"></ion-icon>
+        </div>
       </div>
 
       <!-- Expanded Content -->
