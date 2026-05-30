@@ -23,6 +23,14 @@ declare var google: any;
 
         <!-- Auth Section -->
         <div class="auth-section">
+          <button
+            *ngIf="showReloginButton"
+            class="relogin-btn"
+            type="button"
+            (click)="renderGoogleButton()">
+            Volver a iniciar sesión
+          </button>
+
           <div id="googleSignInBtn" class="google-btn"></div>
 
           <!-- Skip login button for testing / offline use -->
@@ -78,6 +86,22 @@ declare var google: any;
       display: flex;
       justify-content: center;
     }
+    .relogin-btn {
+      width: 100%;
+      border: 0;
+      border-radius: 999px;
+      padding: 12px 18px;
+      background: linear-gradient(135deg, var(--app-accent), #f8d56b);
+      color: #111;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+      box-shadow: 0 8px 24px rgba(255, 214, 102, 0.22);
+    }
+    .relogin-btn:active {
+      transform: translateY(1px);
+    }
     .skip-btn {
       background: none;
       border: 1px solid var(--app-border);
@@ -97,6 +121,7 @@ declare var google: any;
 export class LoginComponent implements OnInit {
   private authService = inject(AuthService);
   private router = inject(Router);
+  showReloginButton = false;
 
   ngOnInit() {
     // If already logged in, go to dashboard
@@ -104,6 +129,8 @@ export class LoginComponent implements OnInit {
       this.router.navigate(['/tabs/dashboard']);
       return;
     }
+
+    this.showReloginButton = Boolean((history.state as { showReloginButton?: boolean } | null)?.showReloginButton);
     this.renderGoogleButton();
   }
 
