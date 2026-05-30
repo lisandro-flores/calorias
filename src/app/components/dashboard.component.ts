@@ -61,7 +61,7 @@ import { HealthConnectService } from '../services/health-connect.service';
 
         <!-- Meals -->
         <app-meal-block
-          *ngFor="let meal of state.meals()"
+          *ngFor="let meal of state.meals(); trackBy: trackByMeal"
           [mealName]="meal.name"
           [mealIcon]="meal.icon"
           [foods]="meal.foods"
@@ -156,5 +156,9 @@ export class DashboardComponent {
 
   onCopyYesterday(mealName: string) {
     this.state.copyFromYesterday(mealName);
+  }
+
+  trackByMeal(_index: number, meal: { name: string }) {
+    return meal.name;
   }
 }
