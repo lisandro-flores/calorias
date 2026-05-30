@@ -446,16 +446,30 @@ export class NutritionStateService {
             if (serverUpdatedAt) {
               this.setClientUpdatedAtForDate(this.todayKey, serverUpdatedAt);
             }
-            if (Array.isArray(entry.meals) && entry.meals.length > 0) {
-              this.meals.set(entry.meals);
+
+            // If we have a pending local entry-sync for today, avoid overwriting
+            // local changes (e.g. deletes) with potentially stale server data.
+            // The outbox will eventually push local changes to the server.
+            try {
+              const hasPending = this.outbox.hasPendingEntrySync(this.todayKey);
+              if (hasPending) {
+                console.log('Skipping applying server entry because local outbox has pending entry-sync for', this.todayKey);
+              } else {
+                if (Array.isArray(entry.meals) && entry.meals.length > 0) {
+                  this.meals.set(entry.meals);
+                }
+                if (entry.waterGlasses !== undefined) {
+                  this.waterGlasses.set(entry.waterGlasses);
+                }
+                // Fase 3: track version for conflict detection
+                if (entry.version !== undefined) {
+                  this.currentEntryVersion.set(entry.version);
+                }
+              }
+            } catch (e) {
+              console.warn('Error checking outbox pending state', e);
             }
-            if (entry.waterGlasses !== undefined) {
-              this.waterGlasses.set(entry.waterGlasses);
-            }
-            // Fase 3: track version for conflict detection
-            if (entry.version !== undefined) {
-              this.currentEntryVersion.set(entry.version);
-            }
+
             // Defer unsetting flag so Angular processes signal effects first
             setTimeout(() => this.isSyncing = false, 0);
           }

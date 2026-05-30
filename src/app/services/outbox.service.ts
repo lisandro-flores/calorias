@@ -100,6 +100,10 @@ export class OutboxService {
     return [...this.queue];
   }
 
+  hasPendingEntrySync(date: string) {
+    return this.queue.some(i => i.type === 'entry-sync' && i.payload?.date === date && (i.status === 'pending' || i.status === 'in-flight' || i.status === 'failed'));
+  }
+
   async processQueue() {
     if (!navigator.onLine) return;
     if (this.processing) return;
