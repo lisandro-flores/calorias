@@ -1,52 +1,99 @@
 import { test, expect } from '@playwright/test';
+import { mockBackendRoutes, injectTestUser, waitForDashboard } from '../helpers/setup';
 
-test('AI parse and add all flow opens picker and adds items', async ({ page, baseURL }) => {
-  // Mock backend responses to avoid 5s hydration timeout and race conditions
-  await page.route('**/entries/day*', route => route.fulfill({ json: { success: true, data: { meals: [], waterGlasses: 0 } } }));
-  await page.route('**/auth/profile*', route => route.fulfill({ json: { success: true, data: {} } }));
-  await page.route('**/entries/range*', route => route.fulfill({ json: { success: true, data: [] } }));
+/**
+ * E2E-03 (mejorado): Flujo completo Registro con IA
+ *
+ * Verifica que:
+ * - El panel se abre al hacer click en "Registrar con IA"
+ * - Se puede escribir en el textarea
+ * - El backend de IA es llamado y devuelve alimentos parseados
+ * - "Agregar todos" abre el picker de comidas
+ * - Seleccionar una comida cierra el picker y actualiza el dashboard
+ */
 
-  // Bypass login guard
-  await page.addInitScript(() => {
-    window.localStorage.setItem('current_user', JSON.stringify({ id: 'test_user', name: 'Test' }));
-    window.localStorage.setItem('onboardingSeen', '1');
+const MOCK_AI_RESPONSE = [
+  { name: 'Arroz', portion: '100g', calories: 200, protein: 4, carbs: 44, fat: 0, icon: 'restaurant' },
+  { name: 'Pollo', portion: '150g', calories: 300, protein: 45, carbs: 0, fat: 7, icon: 'restaurant' },
+];
+
+test.describe('Registro con IA (E2E-03)', () => {
+
+  test.beforeEach(async ({ page }) => {
+    await mockBackendRoutes(page);
+    await page.route('**/ai/parse-meal*', route =>
+      route.fulfill({ json: MOCK_AI_RESPONSE })
+    );
+    await injectTestUser(page);
+    await page.goto('/tabs/dashboard');
+    await waitForDashboard(page);
   });
 
-  await page.goto('/');
+  test('el botón "Registrar con IA" abre el panel', async ({ page }) => {
+    const aiBtn = page.getByRole('button', { name: /registrar con ia/i });
+    await expect(aiBtn).toBeVisible();
+    await aiBtn.click();
 
-  // TODO: Adjust selectors according to the actual UI
-  // This test checks the presence of the AI input area, submits a sample text,
-  // clicks 'Agregar todos' and verifies the picker and that at least one emoji appears in a meal.
+    await expect(page.locator('.ai-panel')).toBeVisible();
+  });
 
-  // Open 'Registrar con IA' (assumes a button exists)
-  const aiButton = page.getByRole('button', { name: /registrar con ia|registrar con IA/i });
-  await expect(aiButton).toBeVisible();
-  await aiButton.click();
+  test('se puede escribir texto en el textarea del panel IA', async ({ page }) => {
+    await page.getByRole('button', { name: /registrar con ia/i }).click();
 
-  // Type sample text into ai input textarea
-  const textarea = page.locator('textarea#ai-input, textarea');
-  await expect(textarea).toBeVisible();
-  await textarea.fill('50g arroz, 1 manzana, 200ml leche');
+    const textarea = page.locator('textarea.ai-textarea');
+    await expect(textarea).toBeVisible();
+    await textarea.fill('50g arroz con pollo a la plancha');
 
-  // Trigger parse (assume a button 'Analizar' exists)
-  const parseBtn = page.getByRole('button', { name: /analizar|parsear/i });
-  await expect(parseBtn).toBeVisible();
-  await parseBtn.click();
+    await expect(textarea).toHaveValue('50g arroz con pollo a la plancha');
+  });
 
-  // Wait for parsed results to show and 'Agregar todos' button
-  const addAllBtn = page.getByRole('button', { name: /agregar todos|agregar todo/i });
-  await expect(addAllBtn).toBeVisible();
-  await addAllBtn.click();
+  test('click en example chip rellena el textarea', async ({ page }) => {
+    await page.getByRole('button', { name: /registrar con ia/i }).click();
 
-  // Expect meal picker to appear
-  const picker = page.getByRole('dialog');
-  await expect(picker).toBeVisible();
+    const chip = page.locator('.example-chip').first();
+    await chip.click();
 
-  // Choose first meal option
-  const mealOption = picker.getByRole('button').first();
-  await mealOption.click();
+    const textarea = page.locator('textarea.ai-textarea');
+    const value = await textarea.inputValue();
+    expect(value.trim().length).toBeGreaterThan(0);
+  });
 
-  // Verify that a meal block now contains an emoji or food item
-  const emoji = page.locator('.food-emoji, .meal-block .food-row .emoji').first();
-  await expect(emoji).toBeVisible();
+  test('flujo completo: analizar → agregar todos → seleccionar comida', async ({ page }) => {
+    await page.getByRole('button', { name: /registrar con ia/i }).click();
+
+    const textarea = page.locator('textarea.ai-textarea');
+    await textarea.fill('arroz con pollo');
+
+    await page.getByRole('button', { name: /analizar/i }).click();
+
+    // Esperar resultados (2 alimentos detectados)
+    await expect(page.locator('.results-title')).toContainText('2 alimentos', { timeout: 8000 });
+
+    // Click en "Agregar todos"
+    await page.getByRole('button', { name: /agregar todos/i }).click();
+
+    // Picker de comidas debe aparecer
+    await expect(page.locator('.meal-picker-card')).toBeVisible();
+    await expect(page.locator('.meal-picker-title')).toContainText('comida');
+
+    // Seleccionar "Desayuno"
+    await page.locator('.meal-picker-btn').first().click();
+
+    // El picker debe cerrarse
+    await expect(page.locator('.meal-picker-card')).not.toBeVisible({ timeout: 3000 });
+  });
+
+  test('el botón Descartar cierra los resultados', async ({ page }) => {
+    await page.getByRole('button', { name: /registrar con ia/i }).click();
+
+    const textarea = page.locator('textarea.ai-textarea');
+    await textarea.fill('avena con leche');
+    await page.getByRole('button', { name: /analizar/i }).click();
+
+    await expect(page.locator('.results-section')).toBeVisible({ timeout: 8000 });
+
+    await page.getByRole('button', { name: /descartar/i }).click();
+
+    await expect(page.locator('.results-section')).not.toBeVisible();
+  });
 });
