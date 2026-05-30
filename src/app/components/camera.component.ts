@@ -21,6 +21,8 @@ type QuickPreset = {
   template: `
     <ion-content class="ion-padding" [scrollY]="false">
       <div class="capture-shell">
+        <div class="section-badge">Registro instantáneo</div>
+
         <div class="hero-card">
           <ion-icon name="camera-outline" class="huge-icon"></ion-icon>
           <h2>Captura rápida</h2>
@@ -39,13 +41,13 @@ type QuickPreset = {
         </div>
 
         <div class="capture-card">
-          <ion-input label="Alimento" labelPlacement="stacked" [(ngModel)]="foodName" placeholder="Ej: Arroz con pollo"></ion-input>
-          <ion-input label="Calorías" labelPlacement="stacked" type="number" min="1" [(ngModel)]="calories" placeholder="Ej: 420"></ion-input>
+          <ion-input label="Alimento" labelPlacement="stacked" [(ngModel)]="foodName" placeholder="Ej: Arroz con pollo" autofocus="true"></ion-input>
+          <ion-input label="Calorías" labelPlacement="stacked" type="number" min="1" inputmode="numeric" [(ngModel)]="calories" placeholder="Ej: 420"></ion-input>
 
           <div class="macro-grid">
-            <ion-input label="Proteína" labelPlacement="stacked" type="number" min="0" [(ngModel)]="protein" placeholder="g"></ion-input>
-            <ion-input label="Carbos" labelPlacement="stacked" type="number" min="0" [(ngModel)]="carbs" placeholder="g"></ion-input>
-            <ion-input label="Grasa" labelPlacement="stacked" type="number" min="0" [(ngModel)]="fat" placeholder="g"></ion-input>
+            <ion-input label="Proteína" labelPlacement="stacked" type="number" min="0" inputmode="numeric" [(ngModel)]="protein" placeholder="g"></ion-input>
+            <ion-input label="Carbos" labelPlacement="stacked" type="number" min="0" inputmode="numeric" [(ngModel)]="carbs" placeholder="g"></ion-input>
+            <ion-input label="Grasa" labelPlacement="stacked" type="number" min="0" inputmode="numeric" [(ngModel)]="fat" placeholder="g"></ion-input>
           </div>
 
           <button class="save-btn" (click)="saveQuickCapture()" [disabled]="isSaving() || !canSave()">
@@ -79,6 +81,19 @@ type QuickPreset = {
       gap: 14px;
       padding-bottom: 8px;
     }
+    .section-badge {
+      display: inline-flex;
+      align-self: flex-start;
+      background: rgba(255, 193, 7, 0.12);
+      color: var(--app-accent);
+      border: 1px solid rgba(255, 193, 7, 0.18);
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.6px;
+      text-transform: uppercase;
+    }
     .hero-card,
     .capture-card,
     .preset-section,
@@ -87,6 +102,7 @@ type QuickPreset = {
       border: 1px solid var(--app-border);
       border-radius: 18px;
       padding: 16px;
+      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.16);
     }
     .hero-card {
       display: flex;
@@ -94,6 +110,7 @@ type QuickPreset = {
       align-items: center;
       text-align: center;
       gap: 8px;
+      background: linear-gradient(180deg, rgba(255, 193, 7, 0.12), rgba(255, 193, 7, 0.02));
     }
     .huge-icon {
       font-size: 80px;
@@ -122,10 +139,14 @@ type QuickPreset = {
       border-radius: 999px;
       padding: 8px 12px;
       font-size: 13px;
+      transition: transform 0.15s, border-color 0.15s, background 0.15s;
     }
     .meal-chip.active {
       border-color: var(--app-accent);
       background: rgba(255, 193, 7, 0.12);
+    }
+    .meal-chip:active {
+      transform: scale(0.98);
     }
     .capture-card {
       display: flex;
@@ -150,9 +171,14 @@ type QuickPreset = {
       font-weight: 700;
       background: var(--app-accent);
       color: #111;
+      box-shadow: 0 10px 22px rgba(255, 193, 7, 0.18);
+      transition: transform 0.15s, opacity 0.15s;
     }
     .save-btn:disabled {
       opacity: 0.45;
+    }
+    .save-btn:active:not(:disabled) {
+      transform: translateY(1px);
     }
     .preset-section {
       display: flex;
@@ -177,6 +203,7 @@ type QuickPreset = {
       border-radius: 14px;
       padding: 12px 14px;
       text-align: left;
+      transition: border-color 0.15s, transform 0.15s, background 0.15s;
     }
     .preset-card div {
       display: flex;
@@ -187,6 +214,11 @@ type QuickPreset = {
     .preset-card small {
       color: var(--app-muted);
       font-size: 12px;
+    }
+    .preset-card:active {
+      transform: scale(0.99);
+      border-color: var(--app-accent);
+      background: rgba(255, 193, 7, 0.05);
     }
     .coming-soon-note {
       display: flex;

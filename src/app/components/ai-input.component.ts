@@ -21,6 +21,7 @@ import { NutritionStateService } from '../services/nutrition-state.service';
       <!-- Expanded panel -->
       <div class="ai-panel" *ngIf="isOpen()">
         <div class="ai-hint">Describe lo que comiste en lenguaje natural</div>
+        <div class="ai-tip">Enter analiza • Shift+Enter añade una nueva línea</div>
 
         <textarea
           class="ai-textarea"
@@ -150,7 +151,18 @@ import { NutritionStateService } from '../services/nutrition-state.service';
     .ai-hint {
       font-size: 12px;
       color: var(--app-muted);
+      margin-bottom: 6px;
+    }
+    .ai-tip {
+      display: inline-flex;
+      align-self: flex-start;
       margin-bottom: 10px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--app-border);
+      color: var(--app-muted);
+      font-size: 11px;
     }
 
     .ai-textarea {
@@ -176,23 +188,27 @@ import { NutritionStateService } from '../services/nutrition-state.service';
     .examples-row {
       display: flex;
       flex-wrap: wrap;
-      gap: 6px;
-      margin: 10px 0;
+      gap: 8px;
+      margin: 10px 0 12px;
     }
     .example-chip {
       background: none;
       border: 1px solid var(--app-border);
-      border-radius: 20px;
-      padding: 4px 10px;
+      border-radius: 999px;
+      padding: 6px 10px;
       font-size: 11px;
-      color: var(--app-muted);
+      color: var(--app-text);
       cursor: pointer;
       font-family: inherit;
       transition: all 0.2s;
+      background: var(--app-bg);
+    }
+    .example-chip:hover {
+      border-color: var(--app-accent);
     }
     .example-chip:active {
-      background: var(--app-surface-2);
-      color: var(--app-text);
+      background: rgba(255, 193, 7, 0.08);
+      transform: translateY(1px);
     }
 
     /* Send button */
@@ -207,11 +223,15 @@ import { NutritionStateService } from '../services/nutrition-state.service';
       font-weight: 600;
       font-family: inherit;
       cursor: pointer;
-      transition: opacity 0.2s;
+      transition: opacity 0.2s, transform 0.2s;
+      box-shadow: 0 10px 22px rgba(255, 193, 7, 0.16);
     }
     .ai-send-btn:disabled {
       opacity: 0.4;
       cursor: not-allowed;
+    }
+    .ai-send-btn:active:not(:disabled) {
+      transform: translateY(1px);
     }
 
     /* Loading dots */
@@ -228,6 +248,10 @@ import { NutritionStateService } from '../services/nutrition-state.service';
     /* Results */
     .results-section {
       margin-top: 14px;
+      padding: 12px;
+      background: var(--app-bg);
+      border: 1px solid var(--app-border);
+      border-radius: 14px;
     }
     .results-title {
       font-size: 12px;
@@ -296,6 +320,7 @@ import { NutritionStateService } from '../services/nutrition-state.service';
       font-weight: 600;
       cursor: pointer;
       font-family: inherit;
+      box-shadow: 0 8px 16px rgba(255, 193, 7, 0.12);
     }
     .confirm-btn ion-icon {
       font-size: 16px;
@@ -309,6 +334,11 @@ import { NutritionStateService } from '../services/nutrition-state.service';
       font-size: 13px;
       font-family: inherit;
       cursor: pointer;
+      transition: border-color 0.2s, color 0.2s;
+    }
+    .dismiss-btn:active {
+      border-color: var(--app-text);
+      color: var(--app-text);
     }
 
     .meal-picker-overlay {
