@@ -520,7 +520,6 @@ export class AiInputComponent {
       this.mealPickerOpen.set(false);
       this.clearResults();
       this.userText = '';
-      this.isOpen.set(false);
 
       // Fire-and-forget toast; do not block UI
       this.showSuccessToast(foods.length, mealName).catch(() => {});
