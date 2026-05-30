@@ -220,17 +220,13 @@ export class NutritionStateService {
     this.pullHistoryFromMongo(true);
     this.scheduleNextDateCheck();
 
-    // Timeout fallback: if hydration hasn't finished in 5s, use local data (Fase 1)
+    // Timeout fallback: if hydration hasn't finished in 5s, stop waiting for cloud
+    // but do not surface unconfirmed local data.
     setTimeout(() => {
       if (this.isHydrating) {
-        console.warn('Cloud hydration timed out, falling back to local data');
+        console.warn('Cloud hydration timed out, keeping cloud-only data state');
         this.isHydrating = false;
         this.dataReady.set(true);
-        this.dataSource.set('local');
-        // Reload local data as fallback
-        this.meals.set(this.loadTodayMealsFromLocal());
-        this.waterGlasses.set(this.loadTodayWaterFromLocal());
-        this.userProfile.set(this.loadProfileFromLocal());
       }
     }, 5000);
 

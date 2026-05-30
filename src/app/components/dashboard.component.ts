@@ -44,12 +44,6 @@ import { HealthConnectService } from '../services/health-connect.service';
           </div>
         </div>
 
-        <!-- Fase 1: Local data banner -->
-        <div class="local-data-banner" *ngIf="state.dataSource() === 'local'">
-          <ion-icon name="cloud-offline-outline"></ion-icon>
-          <span>Mostrando datos locales — sin conexión a la nube</span>
-        </div>
-
         <!-- Hero ring + macros -->
         <app-hero-summary></app-hero-summary>
 
@@ -93,24 +87,6 @@ import { HealthConnectService } from '../services/health-connect.service';
       height: 60vh;
       gap: 16px;
       color: var(--app-muted);
-      font-size: 14px;
-    }
-
-    .local-data-banner {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 10px 14px;
-      background: rgba(251, 191, 36, 0.1);
-      border: 1px solid rgba(251, 191, 36, 0.2);
-      border-radius: 12px;
-      color: #fbbf24;
-      font-size: 12px;
-      margin-bottom: 12px;
-      font-weight: 500;
-    }
-
-    .local-data-banner ion-icon {
       font-size: 14px;
     }
 

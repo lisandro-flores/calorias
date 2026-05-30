@@ -205,7 +205,7 @@ test.describe('Sincronización Multi-dispositivo (E2E-10)', () => {
     expect(Number(JSON.parse(waterData!))).toBe(2);
   });
 
-  test('la hidratación cae a datos locales si la API no responde (timeout 5s)', async ({ page }) => {
+  test('la hidratación termina sin mostrar datos locales si la API no responde (timeout 5s)', async ({ page }) => {
     // Never respond to API calls — simulate unreachable server
     await page.route('**/entries/**', () => { /* never fulfill */ });
     await page.route('**/auth/profile**', () => { /* never fulfill */ });
@@ -214,11 +214,12 @@ test.describe('Sincronización Multi-dispositivo (E2E-10)', () => {
 
     await page.goto('/tabs/dashboard');
 
-    // After ~5s timeout, should show local data banner indicating offline mode
-    await expect(page.locator('.local-data-banner')).toBeVisible({ timeout: 10000 });
+    // After ~5s timeout, the app should stop hydrating without showing local cache
+    await expect(page.locator('.hydration-overlay')).not.toBeVisible({ timeout: 10000 });
+    await expect(page.locator('.local-data-banner')).not.toBeVisible();
 
-    // The dashboard should be functional (water tracker visible)
-    await expect(page.locator('app-water-tracker')).toBeVisible({ timeout: 3000 });
+    // The dashboard shell should render even if the cloud never confirms data
+    await expect(page.locator('.top-row')).toBeVisible({ timeout: 3000 });
   });
 
   test('el sync badge muestra el estado correcto', async ({ page }) => {

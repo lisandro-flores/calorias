@@ -5,14 +5,14 @@ import { mockBackendRoutes, injectTestUser, waitForDashboard } from '../helpers/
  * E2E-09: Comportamiento Offline
  *
  * Verifica que:
- * - Cuando la API no responde, se muestra el banner de datos locales
- * - Después de 5s de timeout la app usa los datos locales
+ * - Cuando la API no responde, la app no muestra datos no confirmados
+ * - Después de 5s de timeout la pantalla deja de hidratar sin cargar local cache
  * - Se puede agregar comida en modo offline
  * - El badge de sync muestra "Pendiente"
  */
 test.describe('Comportamiento Offline (E2E-09)', () => {
 
-  test('muestra overlay de carga mientras hidrata y luego el banner local si la API falla', async ({ page }) => {
+  test('muestra overlay de carga mientras hidrata y luego no enseña datos locales si la API falla', async ({ page }) => {
     // Use delayed responses (not abort) so the overlay has time to render
     // before the hydration timeout kicks in
     await page.route('**/entries/**', route => {
@@ -26,11 +26,9 @@ test.describe('Comportamiento Offline (E2E-09)', () => {
     await injectTestUser(page);
     await page.goto('/tabs/dashboard');
 
-    // The overlay should be visible while waiting for cloud data
-    // (may be brief if errors resolve quickly)
-    // Wait for the local-data-banner which appears after the 5s fallback timeout
-    await expect(page.locator('.local-data-banner')).toBeVisible({ timeout: 10000 });
-    await expect(page.locator('.local-data-banner')).toContainText(/local/i);
+    // The overlay should disappear after hydration times out.
+    await expect(page.locator('.hydration-overlay')).not.toBeVisible({ timeout: 10000 });
+    await expect(page.locator('.local-data-banner')).not.toBeVisible();
   });
 
   test('se puede agregar alimento manualmente en modo offline', async ({ page }) => {
