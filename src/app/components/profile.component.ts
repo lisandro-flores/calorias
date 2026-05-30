@@ -90,13 +90,13 @@ import { OutboxPanelComponent } from './outbox-panel.component';
       <div class="form-card">
         <div class="form-row">
           <label class="form-label">Nombre</label>
-          <input class="form-input" [(ngModel)]="draft.displayName" placeholder="Tu nombre" (change)="save()"/>
+          <input class="form-input" [(ngModel)]="draft.displayName" placeholder="Tu nombre" (ngModelChange)="markDirty()"/>
         </div>
 
         <div class="form-row">
           <label class="form-label">Edad</label>
           <div class="form-input-row">
-            <input class="form-input small" type="number" [(ngModel)]="draft.age" min="10" max="100" (change)="save()"/>
+            <input class="form-input small" type="number" [(ngModel)]="draft.age" min="10" max="100" (ngModelChange)="markDirty()"/>
             <span class="form-unit">años</span>
           </div>
         </div>
@@ -112,14 +112,14 @@ import { OutboxPanelComponent } from './outbox-panel.component';
         <div class="form-row">
           <label class="form-label">Estatura</label>
           <div class="form-input-row">
-            <input class="form-input small" type="number" [(ngModel)]="draft.heightCm" min="100" max="250" (change)="save()"/>
+            <input class="form-input small" type="number" [(ngModel)]="draft.heightCm" min="100" max="250" (ngModelChange)="markDirty()"/>
             <span class="form-unit">cm</span>
           </div>
         </div>
 
         <div class="form-row">
           <label class="form-label">Actividad</label>
-          <select class="form-select" [(ngModel)]="draft.activityLevel" (change)="save()">
+          <select class="form-select" [(ngModel)]="draft.activityLevel" (ngModelChange)="markDirty()">
             <option value="sedentary">Sedentario (sin ejercicio)</option>
             <option value="light">Ligero (1-3 días/sem)</option>
             <option value="moderate">Moderado (3-5 días/sem)</option>
@@ -135,21 +135,21 @@ import { OutboxPanelComponent } from './outbox-panel.component';
         <div class="form-row">
           <label class="form-label">Actual</label>
           <div class="form-input-row">
-            <input class="form-input small" type="number" [(ngModel)]="draft.currentWeight" min="20" max="300" step="0.1" (change)="save()"/>
+            <input class="form-input small" type="number" [(ngModel)]="draft.currentWeight" min="20" max="300" step="0.1" (ngModelChange)="markDirty()"/>
             <span class="form-unit">kg</span>
           </div>
         </div>
         <div class="form-row">
           <label class="form-label">Meta</label>
           <div class="form-input-row">
-            <input class="form-input small" type="number" [(ngModel)]="draft.goalWeight" min="20" max="300" step="0.1" (change)="save()"/>
+            <input class="form-input small" type="number" [(ngModel)]="draft.goalWeight" min="20" max="300" step="0.1" (ngModelChange)="markDirty()"/>
             <span class="form-unit">kg</span>
           </div>
         </div>
         <div class="form-row">
           <label class="form-label">Inicial</label>
           <div class="form-input-row">
-            <input class="form-input small" type="number" [(ngModel)]="draft.startWeight" min="20" max="300" step="0.1" (change)="save()"/>
+            <input class="form-input small" type="number" [(ngModel)]="draft.startWeight" min="20" max="300" step="0.1" (ngModelChange)="markDirty()"/>
             <span class="form-unit">kg</span>
           </div>
         </div>
@@ -164,7 +164,7 @@ import { OutboxPanelComponent } from './outbox-panel.component';
             <input class="form-input small"
               type="number"
               [ngModel]="draft.calorieGoalOverride ?? state.tdee()"
-              (ngModelChange)="draft.calorieGoalOverride = $event; save()"
+              (ngModelChange)="draft.calorieGoalOverride = $event; markDirty()"
               min="500" max="10000"/>
             <span class="form-unit">kcal</span>
           </div>
@@ -182,7 +182,7 @@ import { OutboxPanelComponent } from './outbox-panel.component';
             <input class="form-input small"
               type="number"
               [ngModel]="draft.proteinGoalOverride ?? state.proteinGoal()"
-              (ngModelChange)="draft.proteinGoalOverride = $event; save()"
+              (ngModelChange)="draft.proteinGoalOverride = $event; markDirty()"
               min="10" max="500"/>
             <span class="form-unit">g</span>
           </div>
@@ -194,10 +194,16 @@ import { OutboxPanelComponent } from './outbox-panel.component';
         <div class="form-row">
           <label class="form-label">Agua</label>
           <div class="form-input-row">
-            <input class="form-input small" type="number" [(ngModel)]="draft.waterGoal" min="1" max="20" (change)="save()"/>
+            <input class="form-input small" type="number" [(ngModel)]="draft.waterGoal" min="1" max="20" (ngModelChange)="markDirty()"/>
             <span class="form-unit">vasos</span>
           </div>
         </div>
+        <div class="save-hint" *ngIf="hasDraftChanges()">
+          Tienes cambios pendientes. Guarda para sincronizarlos en tus dispositivos.
+        </div>
+        <button class="save-btn" (click)="confirmSave()" [disabled]="!hasDraftChanges()">
+          Guardar cambios de perfil
+        </button>
       </div>
 
       <!-- ── Datos ── -->
@@ -365,6 +371,26 @@ import { OutboxPanelComponent } from './outbox-panel.component';
       font-size: 11px; font-family: inherit; cursor: pointer;
       padding: 4px 14px 8px; text-align: left;
     }
+    .save-hint {
+      font-size: 11px;
+      color: var(--app-muted);
+      padding: 2px 14px 10px;
+    }
+    .save-btn {
+      width: calc(100% - 28px);
+      margin: 0 14px 14px;
+      border: 1px solid var(--app-accent);
+      border-radius: 12px;
+      padding: 12px 14px;
+      background: var(--app-accent);
+      color: #111;
+      font-family: inherit;
+      font-weight: 700;
+      font-size: 14px;
+    }
+    .save-btn:disabled {
+      opacity: 0.45;
+    }
 
     /* Setting item */
     .setting-item {
@@ -401,6 +427,7 @@ export class ProfileComponent {
 
   // Local draft that mirrors the profile for inline editing
   draft = { ...this.state.userProfile() };
+  private dirty = signal(false);
 
   ngOnInit() {
     this.health.init();
@@ -413,11 +440,33 @@ export class ProfileComponent {
 
   setGender(g: 'male' | 'female') {
     this.draft.gender = g;
-    this.save();
+    this.markDirty();
+  }
+
+  hasDraftChanges = computed(() => this.dirty());
+
+  markDirty() {
+    this.dirty.set(true);
+  }
+
+  async confirmSave() {
+    if (!this.hasDraftChanges()) return;
+
+    const alert = await this.alertCtrl.create({
+      header: '¿Guardar cambios?',
+      message: 'Se actualizará tu perfil y se sincronizará en tus dispositivos.',
+      buttons: [
+        { text: 'Cancelar', role: 'cancel' },
+        { text: 'Guardar', handler: () => this.save() }
+      ]
+    });
+
+    await alert.present();
   }
 
   save() {
     this.state.updateProfile({ ...this.draft });
+    this.dirty.set(false);
     this.showToast();
   }
 
@@ -442,6 +491,7 @@ export class ProfileComponent {
           text: 'Actualizar',
           handler: () => {
             this.draft.currentWeight = weight;
+            this.dirty.set(true);
             this.state.updateProfile({ currentWeight: weight });
             this.showToast();
           }
@@ -468,7 +518,7 @@ export class ProfileComponent {
 
   resetCalAuto() {
     this.draft.calorieGoalOverride = null;
-    this.state.updateProfile({ calorieGoalOverride: null });
+    this.markDirty();
   }
 
   async resetToday() {
