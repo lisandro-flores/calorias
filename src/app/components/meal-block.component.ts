@@ -31,6 +31,9 @@ import { FoodItem, NutritionStateService } from '../services/nutrition-state.ser
           </div>
           <div class="food-actions">
             <span class="food-cals">{{ food.calories }}</span>
+            <button class="edit-btn" (click)="onEditFood(food)">
+              <ion-icon name="create-outline"></ion-icon>
+            </button>
             <button class="delete-btn" (click)="onRemoveFood(food.id)">
               <ion-icon name="close-circle" color="danger"></ion-icon>
             </button>
@@ -137,6 +140,16 @@ import { FoodItem, NutritionStateService } from '../services/nutrition-state.ser
       font-weight: 600;
       color: var(--app-text);
     }
+    .edit-btn {
+      background: none;
+      border: none;
+      padding: 4px;
+      cursor: pointer;
+      font-size: 18px;
+      opacity: 0.65;
+      transition: opacity 0.2s;
+    }
+    .edit-btn:hover { opacity: 1; }
     .delete-btn {
       background: none;
       border: none;
@@ -204,7 +217,67 @@ export class MealBlockComponent {
   }
 
   onRemoveFood(foodId: string) {
-    this.state.removeFoodFromMeal(this.mealName, foodId);
+    void this.confirmRemoveFood(foodId);
+  }
+
+  async confirmRemoveFood(foodId: string) {
+    const alert = await this.alertCtrl.create({
+      header: 'Eliminar alimento',
+      message: 'Esta acción no se puede deshacer.',
+      buttons: [
+        { text: 'Cancelar', role: 'cancel' },
+        {
+          text: 'Eliminar',
+          role: 'destructive',
+          handler: () => {
+            this.state.removeFoodFromMeal(this.mealName, foodId);
+          }
+        }
+      ]
+    });
+
+    await alert.present();
+  }
+
+  async onEditFood(food: FoodItem) {
+    const alert = await this.alertCtrl.create({
+      header: `Editar en ${this.mealName}`,
+      cssClass: 'quick-add-alert',
+      inputs: [
+        { name: 'name', type: 'text', placeholder: 'Nombre del alimento', value: food.name },
+        { name: 'portion', type: 'text', placeholder: 'Porción', value: food.portion },
+        { name: 'calories', type: 'number', placeholder: 'Calorías (kcal)', min: 0, value: String(food.calories) },
+        { name: 'protein', type: 'number', placeholder: 'Proteína (g)', min: 0, value: String(food.protein ?? 0) },
+        { name: 'carbs', type: 'number', placeholder: 'Carbohidratos (g)', min: 0, value: String(food.carbs ?? 0) },
+        { name: 'fat', type: 'number', placeholder: 'Grasa (g)', min: 0, value: String(food.fat ?? 0) },
+      ],
+      buttons: [
+        { text: 'Cancelar', role: 'cancel' },
+        {
+          text: 'Guardar',
+          handler: (data) => {
+            const name = data.name?.trim();
+            const portion = data.portion?.trim();
+            const calories = parseFloat(data.calories);
+            if (!name || !portion || isNaN(calories) || calories <= 0) {
+              return false;
+            }
+
+            this.state.updateFoodInMeal(this.mealName, food.id, {
+              name,
+              portion,
+              calories,
+              protein: parseFloat(data.protein) || 0,
+              carbs: parseFloat(data.carbs) || 0,
+              fat: parseFloat(data.fat) || 0,
+            });
+            return true;
+          }
+        }
+      ]
+    });
+
+    await alert.present();
   }
 
   async onQuickAdd() {

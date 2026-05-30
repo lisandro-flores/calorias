@@ -217,6 +217,38 @@ describe('NutritionStateService', () => {
       expect(service.meals()[0].foods.find(f => f.id === 'test-del')).toBeUndefined();
     });
 
+    it('U-13b: updateFoodInMeal edita alimento existente', () => {
+      const food = {
+        id: 'test-edit',
+        name: 'Original',
+        icon: 'nutrition',
+        portion: '100g',
+        calories: 120,
+        protein: 4,
+        carbs: 10,
+        fat: 2,
+      };
+      service.addFoodToMeal('Desayuno', food);
+
+      service.updateFoodInMeal('Desayuno', 'test-edit', {
+        name: 'Editado',
+        portion: '150g',
+        calories: 200,
+        protein: 8,
+        carbs: 20,
+        fat: 5,
+      });
+
+      const edited = service.meals()[0].foods.find(f => f.id === 'test-edit');
+      expect(edited?.name).toBe('Editado');
+      expect(edited?.portion).toBe('150g');
+      expect(edited?.calories).toBe(200);
+      expect(edited?.protein).toBe(8);
+      expect(edited?.carbs).toBe(20);
+      expect(edited?.fat).toBe(5);
+      expect(service.syncStatus()).toBe('pending');
+    });
+
     it('U-14: quickAdd crea FoodItem correcto', () => {
       service.quickAdd('Cena', 'Arroz', 250, 5, 50, 1);
       const ceña = service.meals().find(m => m.name === 'Cena');

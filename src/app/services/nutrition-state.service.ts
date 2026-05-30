@@ -640,6 +640,45 @@ export class NutritionStateService {
     }));
   }
 
+  updateFoodInMeal(mealName: string, foodId: string, changes: Partial<FoodItem>) {
+    this.markTodayDirty();
+    this.meals.update(meals => meals.map(meal => {
+      if (meal.name !== mealName) {
+        return meal;
+      }
+
+      const updatedFoods = meal.foods.map(food => {
+        if (food.id !== foodId) {
+          return food;
+        }
+
+        const updatedFood = { ...food, ...changes, id: food.id };
+        if (typeof updatedFood.calories === 'number') {
+          updatedFood.calories = Math.round(updatedFood.calories);
+        }
+        if (typeof updatedFood.protein === 'number') {
+          updatedFood.protein = Math.round(updatedFood.protein);
+        }
+        if (typeof updatedFood.carbs === 'number') {
+          updatedFood.carbs = Math.round(updatedFood.carbs);
+        }
+        if (typeof updatedFood.fat === 'number') {
+          updatedFood.fat = Math.round(updatedFood.fat);
+        }
+
+        return updatedFood;
+      });
+
+      const originalFood = meal.foods.find(food => food.id === foodId);
+      const updatedFood = updatedFoods.find(food => food.id === foodId);
+      if (updatedFood && originalFood) {
+        this.addToRecent(updatedFood);
+      }
+
+      return { ...meal, foods: updatedFoods };
+    }));
+  }
+
   quickAdd(mealName: string, name: string, calories: number, protein = 0, carbs = 0, fat = 0) {
     const food: FoodItem = {
       id: Date.now().toString() + Math.random().toString(36).substr(2, 4),
