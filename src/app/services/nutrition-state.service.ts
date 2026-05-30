@@ -439,21 +439,22 @@ export class NutritionStateService {
     this.http.get<any>(`${environment.apiUrl}/entries/day?date=${this.todayKey}&userId=${user.id}`)
       .subscribe({
         next: (res) => {
-          if (res.success && res.data) {
+          const entry = this.extractDayEntryPayload(res);
+          if (entry) {
             this.isSyncing = true;
-            const serverUpdatedAt = res.data.clientUpdatedAt ?? res.data.updatedAt;
+            const serverUpdatedAt = entry.clientUpdatedAt ?? entry.updatedAt;
             if (serverUpdatedAt) {
               this.setClientUpdatedAtForDate(this.todayKey, serverUpdatedAt);
             }
-            if (res.data.meals && res.data.meals.length > 0) {
-              this.meals.set(res.data.meals);
+            if (Array.isArray(entry.meals) && entry.meals.length > 0) {
+              this.meals.set(entry.meals);
             }
-            if (res.data.waterGlasses !== undefined) {
-              this.waterGlasses.set(res.data.waterGlasses);
+            if (entry.waterGlasses !== undefined) {
+              this.waterGlasses.set(entry.waterGlasses);
             }
             // Fase 3: track version for conflict detection
-            if (res.data.version !== undefined) {
-              this.currentEntryVersion.set(res.data.version);
+            if (entry.version !== undefined) {
+              this.currentEntryVersion.set(entry.version);
             }
             // Defer unsetting flag so Angular processes signal effects first
             setTimeout(() => this.isSyncing = false, 0);
@@ -469,6 +470,23 @@ export class NutritionStateService {
           }
         }
       });
+  }
+
+  private extractDayEntryPayload(response: any): any | null {
+    if (!response) return null;
+
+    const data = response.data ?? response;
+    if (!data) return null;
+
+    const entry = data.entry ?? data;
+    if (!entry) return null;
+
+    return {
+      ...entry,
+      version: entry.version ?? data.version,
+      clientUpdatedAt: entry.clientUpdatedAt ?? data.clientUpdatedAt,
+      updatedAt: entry.updatedAt ?? data.updatedAt,
+    };
   }
 
   private pullProfileFromMongo(trackHydration = false) {

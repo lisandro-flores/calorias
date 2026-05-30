@@ -640,6 +640,28 @@ describe('NutritionStateService', () => {
       localStorage.removeItem('current_user');
     });
 
+    it('MD-12c: extractDayEntryPayload acepta respuesta anidada del backend', () => {
+      const backendResponse = {
+        success: true,
+        data: {
+          entry: {
+            meals: [{ name: 'Desayuno', foods: [] }],
+            waterGlasses: 4,
+            version: 7,
+            clientUpdatedAt: '2026-05-30T10:00:00.000Z',
+          },
+          version: 7,
+        },
+      };
+
+      const entry = (service as any).extractDayEntryPayload(backendResponse);
+
+      expect(entry.meals.length).toBe(1);
+      expect(entry.waterGlasses).toBe(4);
+      expect(entry.version).toBe(7);
+      expect(entry.clientUpdatedAt).toBe('2026-05-30T10:00:00.000Z');
+    });
+
     // --- clientUpdatedAt tracking ---
 
     it('MD-13: markTodayDirty actualiza clientUpdatedAt en localStorage', () => {
