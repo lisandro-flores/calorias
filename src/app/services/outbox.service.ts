@@ -118,7 +118,7 @@ export class OutboxService {
           if (item.type === 'entry-sync') {
             await this.http.post(`${environment.apiUrl}/entries/sync`, item.payload).toPromise();
           } else if (item.type === 'profile-sync') {
-            await this.http.post(`${environment.apiUrl}/auth/profile`, item.payload).toPromise();
+            await this.http.patch(`${environment.apiUrl}/auth/profile`, item.payload).toPromise();
           }
           item.status = 'done';
           this.syncComplete$.next({ type: item.type, payload: item.payload });

@@ -3,6 +3,8 @@ import { CommonModule } from '@angular/common';
 import { IonicModule } from '@ionic/angular';
 import { NutritionStateService } from '../services/nutrition-state.service';
 import { OutboxService } from '../services/outbox.service';
+import { addIcons } from 'ionicons';
+import { alertCircleOutline, cloudDoneOutline, syncOutline, timeOutline } from 'ionicons/icons';
 
 @Component({
   selector: 'app-sync-indicator',
@@ -21,6 +23,12 @@ export class SyncIndicatorComponent {
   pending = 0;
 
   constructor(public ns: NutritionStateService, outbox: OutboxService) {
+    addIcons({
+      'time-outline': timeOutline,
+      'sync-outline': syncOutline,
+      'alert-circle-outline': alertCircleOutline,
+      'cloud-done-outline': cloudDoneOutline,
+    });
     outbox.pending$.subscribe(n => this.pending = n);
   }
 }

@@ -196,6 +196,26 @@ describe('OutboxService', () => {
         req.flush({ success: true });
       });
     });
+
+    it('should send profile-sync as PATCH to /auth/profile', async () => {
+      const payload = {
+        userId: 'user1',
+        profile: { displayName: 'User1' },
+        recentFoods: [],
+      };
+
+      service.enqueue('profile-sync', payload);
+
+      Object.defineProperty(navigator, 'onLine', { value: true, writable: true });
+
+      const processPromise = service.processQueue();
+      const req = httpMock.expectOne(r => r.url.includes('/auth/profile'));
+      expect(req.request.method).toBe('PATCH');
+      req.flush({ success: true });
+
+      await processPromise;
+      expect(service.list().length).toBe(0);
+    });
   });
 
   describe('Deduplicación (Fase 4)', () => {
