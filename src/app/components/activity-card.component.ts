@@ -56,9 +56,10 @@ import { HealthConnectService } from '../services/health-connect.service';
     .activity-card {
       background: var(--app-surface);
       border: 1px solid var(--app-border);
-      border-radius: 14px;
+      border-radius: 18px;
       padding: 16px;
       margin-bottom: 12px;
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
     }
     .activity-head {
       display: flex;
@@ -94,6 +95,7 @@ import { HealthConnectService } from '../services/health-connect.service';
       border-radius: 12px;
       padding: 10px 8px;
       text-align: center;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.03);
     }
     .metric-value {
       display: block;
@@ -136,6 +138,10 @@ import { HealthConnectService } from '../services/health-connect.service';
       border: 1px solid var(--app-border);
       background: var(--app-surface-2);
       color: var(--app-text);
+      transition: transform 0.15s, border-color 0.15s;
+    }
+    .action-btn:active {
+      transform: translateY(1px);
     }
     .action-btn.primary {
       background: var(--app-accent);

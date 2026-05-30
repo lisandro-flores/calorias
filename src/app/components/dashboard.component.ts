@@ -37,42 +37,51 @@ import { HealthConnectService } from '../services/health-connect.service';
 
       <!-- Main content (only when dataReady) -->
       <div *ngIf="state.dataReady()">
-        <div class="top-row">
+        <div class="dashboard-hero">
+          <div>
+            <div class="eyebrow">Hoy</div>
+            <h1>Tu registro</h1>
+            <p>Un vistazo rápido a calorías, macros y comidas del día.</p>
+          </div>
           <div class="sync-badge" [ngClass]="state.syncStatus()">
             <ion-icon [name]="state.syncStatusIcon()"></ion-icon>
             <span>{{ state.syncStatusLabel() }}</span>
           </div>
         </div>
 
-        <!-- Hero ring + macros -->
-        <app-hero-summary></app-hero-summary>
+        <section class="section-block">
+          <div class="section-label">Resumen</div>
+          <app-hero-summary></app-hero-summary>
+        </section>
 
-        <!-- Health Connect activity -->
-        <app-activity-card></app-activity-card>
+        <section class="section-block">
+          <div class="section-label">Actividad</div>
+          <app-activity-card></app-activity-card>
+        </section>
 
-        <!-- AI Input -->
-        <app-ai-input></app-ai-input>
+        <section class="section-block">
+          <div class="section-label">Captura rápida</div>
+          <app-ai-input></app-ai-input>
+          <app-food-search></app-food-search>
+          <app-recent-foods></app-recent-foods>
+        </section>
 
-        <!-- Food search -->
-        <app-food-search></app-food-search>
+        <section class="section-block">
+          <div class="section-label">Comidas del día</div>
+          <app-meal-block
+            *ngFor="let meal of state.meals(); trackBy: trackByMeal"
+            [mealName]="meal.name"
+            [mealIcon]="meal.icon"
+            [foods]="meal.foods"
+            (copyYesterday)="onCopyYesterday(meal.name)">
+          </app-meal-block>
+        </section>
 
-        <!-- Recent foods chips -->
-        <app-recent-foods></app-recent-foods>
-
-        <!-- Meals -->
-        <app-meal-block
-          *ngFor="let meal of state.meals(); trackBy: trackByMeal"
-          [mealName]="meal.name"
-          [mealIcon]="meal.icon"
-          [foods]="meal.foods"
-          (copyYesterday)="onCopyYesterday(meal.name)">
-        </app-meal-block>
-
-        <!-- Water -->
-        <app-water-tracker></app-water-tracker>
-
-        <!-- Weight goal -->
-        <app-goal-progress></app-goal-progress>
+        <section class="section-block bottom-stack">
+          <div class="section-label">Progreso</div>
+          <app-water-tracker></app-water-tracker>
+          <app-goal-progress></app-goal-progress>
+        </section>
 
         <div class="footer-space"></div>
       </div>
@@ -90,10 +99,37 @@ import { HealthConnectService } from '../services/health-connect.service';
       font-size: 14px;
     }
 
-    .top-row {
+    .dashboard-hero {
       display: flex;
-      justify-content: flex-end;
-      margin-bottom: 10px;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 14px;
+      padding: 2px 2px 6px;
+    }
+
+    .eyebrow {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      color: var(--app-accent);
+      margin-bottom: 4px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 28px;
+      line-height: 1.1;
+      color: var(--app-text);
+    }
+
+    .dashboard-hero p {
+      margin: 6px 0 0;
+      color: var(--app-muted);
+      font-size: 13px;
+      line-height: 1.45;
+      max-width: 220px;
     }
 
     .sync-badge {
@@ -126,6 +162,25 @@ import { HealthConnectService } from '../services/health-connect.service';
       color: var(--ion-color-success);
     }
 
+    .section-block {
+      margin-bottom: 14px;
+    }
+
+    .section-label {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--app-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.7px;
+      margin: 0 0 10px 2px;
+    }
+
+    .bottom-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
     .footer-space {
       height: 20px;
     }
@@ -138,6 +193,16 @@ import { HealthConnectService } from '../services/health-connect.service';
     app-meal-block:nth-of-type(2) { animation-delay: 40ms; }
     app-meal-block:nth-of-type(3) { animation-delay: 80ms; }
     app-meal-block:nth-of-type(4) { animation-delay: 120ms; }
+
+    app-hero-summary,
+    app-activity-card,
+    app-ai-input,
+    app-food-search,
+    app-recent-foods,
+    app-water-tracker,
+    app-goal-progress {
+      display: block;
+    }
 
     @keyframes fadeUp {
       from { opacity: 0; transform: translateY(8px); }

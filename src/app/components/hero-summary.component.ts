@@ -9,6 +9,7 @@ import { NutritionStateService } from '../services/nutrition-state.service';
   imports: [CommonModule, IonicModule],
   template: `
     <div class="hero-wrapper">
+      <div class="summary-card">
       <!-- Circular Progress -->
       <div class="ring-container">
         <svg viewBox="0 0 120 120" width="180" height="180">
@@ -85,11 +86,19 @@ import { NutritionStateService } from '../services/nutrition-state.service';
           </div>
         </div>
       </div>
+      </div>
     </div>
   `,
   styles: [`
     .hero-wrapper {
-      padding: 20px 0 8px;
+      padding: 0;
+    }
+    .summary-card {
+      background: linear-gradient(180deg, rgba(255,193,7,0.08), rgba(255,193,7,0.02));
+      border: 1px solid var(--app-border);
+      border-radius: 22px;
+      padding: 18px 14px 16px;
+      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.16);
     }
     .ring-container {
       display: flex;
@@ -122,11 +131,11 @@ import { NutritionStateService } from '../services/nutrition-state.service';
     }
     .deficit-indicator {
       text-align: center;
-      font-size: 11px;
+      font-size: 12px;
       color: var(--app-muted);
       margin-bottom: 16px;
       padding: 6px 12px;
-      background: rgba(255,255,255,0.03);
+      background: rgba(255,255,255,0.04);
       border-radius: 20px;
       width: fit-content;
       margin-inline: auto;
@@ -152,7 +161,7 @@ import { NutritionStateService } from '../services/nutrition-state.service';
     }
     .macro-bar-track {
       height: 4px;
-      background: rgba(255,255,255,0.06);
+      background: rgba(255,255,255,0.07);
       border-radius: 99px;
       overflow: hidden;
     }

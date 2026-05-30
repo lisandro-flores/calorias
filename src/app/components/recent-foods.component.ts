@@ -21,6 +21,11 @@ import { NutritionStateService, FoodItem } from '../services/nutrition-state.ser
   styles: [`
     .recent-section {
       margin-bottom: 16px;
+      padding: 14px;
+      background: var(--app-surface);
+      border: 1px solid var(--app-border);
+      border-radius: 18px;
+      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.12);
     }
     .section-title {
       font-size: 13px;
@@ -46,6 +51,7 @@ import { NutritionStateService, FoodItem } from '../services/nutrition-state.ser
       cursor: pointer;
       font-family: inherit;
       transition: all 0.2s;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.03);
     }
     .food-chip:active {
       background: var(--app-surface-2);

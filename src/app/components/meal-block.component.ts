@@ -62,9 +62,10 @@ import { FoodItem, NutritionStateService } from '../services/nutrition-state.ser
     .meal-section {
       background: var(--app-surface);
       border: 1px solid var(--app-border);
-      border-radius: 14px;
+      border-radius: 18px;
       margin-bottom: 12px;
       overflow: hidden;
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
     }
     .meal-header {
       display: flex;
@@ -73,6 +74,10 @@ import { FoodItem, NutritionStateService } from '../services/nutrition-state.ser
       padding: 14px 16px;
       cursor: pointer;
       -webkit-tap-highlight-color: transparent;
+      transition: background 0.15s;
+    }
+    .meal-header:active {
+      background: rgba(255,255,255,0.03);
     }
     .meal-title-row {
       display: flex;
@@ -101,7 +106,7 @@ import { FoodItem, NutritionStateService } from '../services/nutrition-state.ser
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 8px 0;
+      padding: 10px 0;
       border-bottom: 1px solid var(--app-border);
       gap: 10px;
     }
@@ -134,6 +139,7 @@ import { FoodItem, NutritionStateService } from '../services/nutrition-state.ser
       display: flex;
       align-items: center;
       gap: 8px;
+      flex-shrink: 0;
     }
     .food-cals {
       font-size: 14px;
@@ -170,7 +176,7 @@ import { FoodItem, NutritionStateService } from '../services/nutrition-state.ser
     .meal-actions {
       display: flex;
       gap: 8px;
-      margin-top: 10px;
+      margin-top: 12px;
     }
     .action-btn {
       flex: 1;
