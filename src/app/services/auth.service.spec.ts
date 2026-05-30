@@ -72,19 +72,13 @@ describe('AuthService', () => {
       expect(service.currentUser()?.id).toBe('user456');
     });
 
-    it('A-04: loginWithGoogleToken — backend falla → fallback offline_mode', async () => {
+    it('A-04: loginWithGoogleToken — backend falla → lanza error', async () => {
       spyOn(window, 'fetch').and.returnValue(
         Promise.resolve(new Response('Unauthorized', { status: 401 }))
       );
 
-      // El JWT necesita un payload base64 decodificable
-      const fakePayload = btoa(JSON.stringify({ email: 'user@test.com', name: 'Usuario', picture: '' }));
-      const fakeJwt = `header.${fakePayload}.signature`;
-
-      await service.loginWithGoogleToken(fakeJwt);
-
-      expect(service.currentUser()).not.toBeNull();
-      expect(service.currentUser()?.id).toBe('offline_mode');
+      await expectAsync(service.loginWithGoogleToken('google-jwt-token')).toBeRejected();
+      expect(service.currentUser()).toBeNull();
     });
 
     it('A-05: logout() limpia el signal currentUser', () => {

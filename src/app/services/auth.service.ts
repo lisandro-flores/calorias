@@ -55,20 +55,7 @@ export class AuthService {
       
     } catch (e) {
       console.error("Error en validación NestJS:", e);
-      // Fallback local por si el server de BD se apaga
-      const payloadInfo = this.decodeJwt(googleJwt);
-      const mockUser = {
-        id: 'offline_mode',
-        email: payloadInfo.email,
-        name: payloadInfo.name,
-        picture: payloadInfo.picture,
-        token: googleJwt
-      };
-      this.currentUser.set(mockUser);
-      if (typeof window !== 'undefined') {
-        window.dispatchEvent(new CustomEvent('auth:login-success', { detail: { userId: mockUser.id } }));
-      }
-      return mockUser;
+      throw e;
     }
   }
 
@@ -85,11 +72,4 @@ export class AuthService {
     }
   }
 
-  private decodeJwt(token: string) {
-    try {
-      return JSON.parse(atob(token.split('.')[1]));
-    } catch (e) {
-      return { email: 'user@test.com', name: 'Usuario', picture: '' };
-    }
-  }
 }
