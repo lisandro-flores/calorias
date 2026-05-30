@@ -213,6 +213,7 @@ export class NutritionStateService {
   private isSyncing = false;
   private isHydrating = true;
   private initialHydrationStepsRemaining = 3;
+  private hasPendingLocalEntryChanges = false;
 
   constructor() {
     this.pullFromMongo(true);
@@ -251,6 +252,9 @@ export class NutritionStateService {
     // Fase 5: Re-fetch post-push — when entry-sync completes, pull fresh data
     this.outbox.syncComplete$.subscribe(event => {
       if (event.type === 'entry-sync' && !this.isHydrating) {
+        if (event.payload?.date === this.todayKey) {
+          this.hasPendingLocalEntryChanges = false;
+        }
         console.log('Entry sync completed, pulling fresh data from server...');
         this.pullFromMongo();
       }
@@ -451,9 +455,9 @@ export class NutritionStateService {
             // local changes (e.g. deletes) with potentially stale server data.
             // The outbox will eventually push local changes to the server.
             try {
-              const hasPending = this.outbox.hasPendingEntrySync(this.todayKey);
+              const hasPending = this.hasPendingLocalEntryChanges || this.outbox.hasPendingEntrySync(this.todayKey);
               if (hasPending) {
-                console.log('Skipping applying server entry because local outbox has pending entry-sync for', this.todayKey);
+                console.log('Skipping applying server entry because local changes are pending for', this.todayKey);
               } else {
                 if (Array.isArray(entry.meals) && entry.meals.length > 0) {
                   this.meals.set(entry.meals);
@@ -745,6 +749,7 @@ export class NutritionStateService {
 
   private markTodayDirty() {
     this.syncStatus.set('pending');
+    this.hasPendingLocalEntryChanges = true;
     this.setClientUpdatedAtForDate(this.todayKey, new Date().toISOString());
   }
 

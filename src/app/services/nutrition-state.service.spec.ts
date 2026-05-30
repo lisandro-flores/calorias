@@ -1,5 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
+import { HttpTestingController } from '@angular/common/http/testing';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { NutritionStateService, UserProfile } from './nutrition-state.service';
 import { AuthService } from './auth.service';
@@ -7,6 +8,7 @@ import { AuthService } from './auth.service';
 describe('NutritionStateService', () => {
   let service: NutritionStateService;
   let authService: AuthService;
+  let httpMock: HttpTestingController;
 
   beforeEach(() => {
     TestBed.configureTestingModule({
@@ -19,6 +21,11 @@ describe('NutritionStateService', () => {
     });
     service = TestBed.inject(NutritionStateService);
     authService = TestBed.inject(AuthService);
+    httpMock = TestBed.inject(HttpTestingController);
+  });
+
+  afterEach(() => {
+    httpMock.verify();
   });
 
   describe('Estado inicial (U-básicos)', () => {
@@ -660,6 +667,45 @@ describe('NutritionStateService', () => {
       expect(entry.waterGlasses).toBe(4);
       expect(entry.version).toBe(7);
       expect(entry.clientUpdatedAt).toBe('2026-05-30T10:00:00.000Z');
+    });
+
+    it('MD-12d: pullFromMongo no sobrescribe cambios locales pendientes', () => {
+      spyOn<any>(service as any, 'pullProfileFromMongo').and.stub();
+      spyOn<any>(service as any, 'pullHistoryFromMongo').and.stub();
+
+      authService.currentUser.set({
+        id: 'user123',
+        email: 'user@example.com',
+        name: 'User',
+        picture: '',
+        token: 'token',
+      });
+
+      (service as any).hasPendingLocalEntryChanges = true;
+      service.meals.set([
+        { name: 'Desayuno', icon: 'partly-sunny-outline', foods: [] },
+        { name: 'Comida', icon: 'sunny-outline', foods: [] },
+        { name: 'Cena', icon: 'moon-outline', foods: [] },
+        { name: 'Snacks', icon: 'fast-food-outline', foods: [] },
+      ]);
+
+      const beforeMeals = service.meals();
+
+      (service as any).pullFromMongo(false);
+
+      const req = httpMock.expectOne(request => request.url.includes('/entries/day') && request.method === 'GET');
+      req.flush({
+        success: true,
+        data: {
+          entry: {
+            meals: [{ name: 'Desayuno', foods: [{ id: 'server', name: 'Server item', icon: 'nutrition', portion: '100g', calories: 999 }] }],
+            waterGlasses: 9,
+            version: 8,
+          }
+        }
+      });
+
+      expect(service.meals()).toBe(beforeMeals);
     });
 
     // --- clientUpdatedAt tracking ---
