@@ -862,7 +862,7 @@ export class NutritionStateService {
       const stored = localStorage.getItem('current_user');
       if (!stored) return false;
       const user = JSON.parse(stored);
-      return Boolean(user && user.id && user.id !== 'offline_mode');
+      return Boolean(user && user.id && user.id !== 'offline_mode' && user.id !== 'local_user');
     } catch {
       return false;
     }

@@ -634,6 +634,12 @@ describe('NutritionStateService', () => {
       expect((service as any).shouldPreferCloudData()).toBe(false);
     });
 
+    it('MD-12b: shouldPreferCloudData retorna false para local_user legacy', () => {
+      localStorage.setItem('current_user', JSON.stringify({ id: 'local_user' }));
+      expect((service as any).shouldPreferCloudData()).toBe(false);
+      localStorage.removeItem('current_user');
+    });
+
     // --- clientUpdatedAt tracking ---
 
     it('MD-13: markTodayDirty actualiza clientUpdatedAt en localStorage', () => {

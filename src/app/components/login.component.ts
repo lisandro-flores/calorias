@@ -132,7 +132,7 @@ export class LoginComponent implements OnInit {
   skipLogin() {
     // Create an offline user so the guard lets us through
     this.authService.currentUser.set({
-      id: 'local_user',
+      id: 'offline_mode',
       email: '',
       name: 'Usuario',
       picture: '',
