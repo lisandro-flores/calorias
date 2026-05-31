@@ -45,12 +45,16 @@ export interface UserProfile {
   activityLevel: ActivityLevel;
   calorieGoalOverride: number | null;
   proteinGoalOverride: number | null;
+  carbGoalOverride: number | null;
+  fatGoalOverride: number | null;
   waterGoal: number;
 }
 
 export interface UserGoals {
   calorieGoal: number;
   proteinGoal: number;
+  carbGoal: number;
+  fatGoal: number;
   waterGoal: number;
   startWeight: number;
   currentWeight: number;
@@ -76,6 +80,8 @@ const DEFAULT_PROFILE: UserProfile = {
   activityLevel: 'moderate',
   calorieGoalOverride: null,
   proteinGoalOverride: null,
+  carbGoalOverride: null,
+  fatGoalOverride: null,
   waterGoal: 8,
 };
 
@@ -152,22 +158,25 @@ export class NutritionStateService {
     return this.tdee();
   });
 
-  proteinGoal = computed(() => {
+  goals = computed<UserGoals>(() => {
     const p = this.userProfile();
-    if (p.proteinGoalOverride !== null) return p.proteinGoalOverride;
-    return Math.round(p.currentWeight * 1.8);
+    const cals = this.calorieGoal();
+    const goalWeight = p.goalWeight > 0 ? p.goalWeight : p.currentWeight;
+    const defaultProtein = Math.round(goalWeight * 2);
+    const defaultCarb = Math.round((cals * 0.40) / 4);
+    const defaultFat = Math.round((cals - (defaultProtein * 4) - (defaultCarb * 4)) / 9);
+
+    return {
+      calorieGoal: cals,
+      proteinGoal: p.proteinGoalOverride || defaultProtein,
+      carbGoal: p.carbGoalOverride || defaultCarb,
+      fatGoal: p.fatGoalOverride || Math.max(defaultFat, 0),
+      waterGoal: p.waterGoal,
+      startWeight: p.startWeight,
+      currentWeight: p.currentWeight,
+      goalWeight: p.goalWeight
+    };
   });
-
-  waterGoal = computed(() => this.userProfile().waterGoal);
-
-  goals = computed<UserGoals>(() => ({
-    calorieGoal: this.calorieGoal(),
-    proteinGoal: this.proteinGoal(),
-    waterGoal: this.waterGoal(),
-    startWeight: this.userProfile().startWeight,
-    currentWeight: this.userProfile().currentWeight,
-    goalWeight: this.userProfile().goalWeight,
-  }));
 
   totalCalories = computed(() =>
     this.meals().reduce((acc, meal) =>
@@ -617,6 +626,10 @@ export class NutritionStateService {
       if (partial.goalWeight !== undefined) updated.goalWeight = partial.goalWeight;
       return { ...p, ...updated };
     });
+  }
+
+  proteinGoal() {
+    return this.goals().proteinGoal;
   }
 
   addFoodToMeal(mealName: string, food: FoodItem) {

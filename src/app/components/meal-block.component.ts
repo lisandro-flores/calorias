@@ -2,6 +2,7 @@ import { Component, Input, Output, EventEmitter, inject, signal } from '@angular
 import { CommonModule } from '@angular/common';
 import { IonicModule, AlertController, ActionSheetController } from '@ionic/angular';
 import { FormsModule } from '@angular/forms';
+import { Haptics, ImpactStyle } from '@capacitor/haptics';
 import { FoodItem, NutritionStateService } from '../services/nutrition-state.service';
 
 @Component({
@@ -49,9 +50,22 @@ import { FoodItem, NutritionStateService } from '../services/nutrition-state.ser
           Sin alimentos
         </div>
 
+        <!-- Inline Quick Add Form -->
+        <div class="inline-add-form" *ngIf="showInlineAdd">
+          <input class="inline-input" placeholder="Ej: Manzana" [(ngModel)]="quickAddName" />
+          <div class="inline-row">
+            <input class="inline-input small" type="number" placeholder="kcal" [(ngModel)]="quickAddCals" />
+            <input class="inline-input small" type="number" placeholder="prot (g)" [(ngModel)]="quickAddProt" />
+          </div>
+          <div class="inline-actions">
+            <button class="action-btn subtle" (click)="showInlineAdd = false">Cancelar</button>
+            <button class="action-btn primary" (click)="submitInlineAdd()" [disabled]="!canSubmitInlineAdd()">Guardar</button>
+          </div>
+        </div>
+
         <!-- Action Buttons -->
-        <div class="meal-actions">
-          <button class="action-btn primary" (click)="onQuickAdd()">
+        <div class="meal-actions" *ngIf="!showInlineAdd">
+          <button class="action-btn primary" (click)="showInlineAdd = true">
             <ion-icon name="add"></ion-icon>
             Agregar
           </button>
@@ -207,7 +221,31 @@ import { FoodItem, NutritionStateService } from '../services/nutrition-state.ser
       color: var(--app-muted);
       border: 1px solid var(--app-border);
     }
-    .action-btn ion-icon { font-size: 16px; }
+    .inline-add-form {
+      background: var(--app-bg);
+      border: 1px solid var(--app-border);
+      border-radius: 12px;
+      padding: 12px;
+      margin-top: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .inline-input {
+      background: var(--app-surface);
+      border: 1px solid var(--app-border);
+      border-radius: 8px;
+      color: var(--app-text);
+      padding: 10px 12px;
+      font-size: 14px;
+      outline: none;
+      width: 100%;
+      font-family: inherit;
+    }
+    .inline-input:focus { border-color: var(--app-accent); }
+    .inline-row { display: flex; gap: 8px; }
+    .inline-input.small { flex: 1; }
+    .inline-actions { display: flex; gap: 8px; margin-top: 4px; }
   `]
 })
 export class MealBlockComponent {
@@ -220,11 +258,46 @@ export class MealBlockComponent {
   private alertCtrl = inject(AlertController);
 
   expanded = false;
+  showInlineAdd = false;
+  quickAddName = '';
+  quickAddCals = '';
+  quickAddProt = '';
 
   mealCalories() { return this.foods.reduce((acc, f) => acc + f.calories, 0); }
 
   onCopyYesterday() {
     this.copyYesterday.emit();
+  }
+
+  async onQuickAdd() {
+    const alert = await this.alertCtrl.create({
+      header: `Agregar a ${this.mealName}`,
+      cssClass: 'quick-add-alert',
+      inputs: [
+        { name: 'name', type: 'text', placeholder: 'Nombre del alimento' },
+        { name: 'calories', type: 'number', placeholder: 'Calorías (kcal)', min: 0 },
+        { name: 'protein', type: 'number', placeholder: 'Proteína (g)', min: 0 },
+      ],
+      buttons: [
+        { text: 'Cancelar', role: 'cancel' },
+        {
+          text: 'Agregar',
+          handler: (data: any) => {
+            const name = data.name?.trim();
+            const calories = parseFloat(data.calories);
+            const protein = parseFloat(data.protein) || 0;
+            if (!name || isNaN(calories) || calories <= 0) {
+              return false;
+            }
+
+            this.state.quickAdd(this.mealName, name, calories, protein);
+            return true;
+          }
+        }
+      ]
+    });
+
+    await alert.present();
   }
 
   onRemoveFood(foodId: string) {
@@ -240,8 +313,9 @@ export class MealBlockComponent {
         {
           text: 'Eliminar',
           role: 'destructive',
-          handler: () => {
+          handler: async () => {
             this.state.removeFoodFromMeal(this.mealName, foodId);
+            try { await Haptics.impact({ style: ImpactStyle.Light }); } catch (e) {}
           }
         }
       ]
@@ -291,30 +365,22 @@ export class MealBlockComponent {
     await alert.present();
   }
 
-  async onQuickAdd() {
-    const alert = await this.alertCtrl.create({
-      header: `Agregar a ${this.mealName}`,
-      cssClass: 'quick-add-alert',
-      inputs: [
-        { name: 'name', type: 'text', placeholder: 'Nombre del alimento' },
-        { name: 'calories', type: 'number', placeholder: 'Calorías (kcal)', min: 0 },
-        { name: 'protein', type: 'number', placeholder: 'Proteína (g) — opcional', min: 0 },
-      ],
-      buttons: [
-        { text: 'Cancelar', role: 'cancel' },
-        {
-          text: 'Agregar',
-          handler: (data) => {
-            const name = data.name?.trim();
-            const calories = parseFloat(data.calories);
-            if (!name || isNaN(calories) || calories <= 0) return false;
-            const protein = parseFloat(data.protein) || 0;
-            this.state.quickAdd(this.mealName, name, calories, protein);
-            return true;
-          }
-        }
-      ]
-    });
-    await alert.present();
+  canSubmitInlineAdd() {
+    return this.quickAddName.trim().length > 0 && Number(this.quickAddCals) > 0;
+  }
+
+  async submitInlineAdd() {
+    if (!this.canSubmitInlineAdd()) return;
+    this.state.quickAdd(
+      this.mealName,
+      this.quickAddName.trim(),
+      Number(this.quickAddCals),
+      Number(this.quickAddProt) || 0
+    );
+    try { await Haptics.impact({ style: ImpactStyle.Light }); } catch (e) {}
+    this.quickAddName = '';
+    this.quickAddCals = '';
+    this.quickAddProt = '';
+    this.showInlineAdd = false;
   }
 }
