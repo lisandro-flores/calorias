@@ -2,6 +2,7 @@ import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { IonicModule, ToastController } from '@ionic/angular';
+import { Haptics, ImpactStyle } from '@capacitor/haptics';
 import { AiService, AiFoodItem } from '../services/ai.service';
 import { NutritionStateService } from '../services/nutrition-state.service';
 
@@ -553,6 +554,7 @@ export class AiInputComponent {
 
       // Fire-and-forget toast; do not block UI
       this.showSuccessToast(foods.length, mealName).catch(() => {});
+      try { await Haptics.impact({ style: ImpactStyle.Light }); } catch (e) {}
     } catch (err) {
       console.error('Error adding foods to meal', err);
       this.errorMsg.set('No se pudieron agregar los alimentos. Intenta de nuevo.');

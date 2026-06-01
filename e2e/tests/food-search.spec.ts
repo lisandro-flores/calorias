@@ -47,10 +47,17 @@ const MOCK_OFF_RESPONSE = {
  * NOT programmatic `fill()`.
  */
 async function typeInSearchbar(page: import('@playwright/test').Page, text: string) {
+  // Wait for the ion-searchbar to be attached
   const searchbar = page.locator('ion-searchbar');
-  await searchbar.click();
-  // Clear any previous value first
+  await expect(searchbar).toBeVisible({ timeout: 5000 });
+
+  // Access the native input inside the shadow root
   const input = searchbar.locator('input');
+  
+  // Try to wait for input to be attached in shadow root
+  await input.waitFor({ state: 'attached', timeout: 5000 }).catch(() => {});
+  
+  await input.click();
   await input.fill('');
   // Type character by character to trigger Angular reactive forms
   await input.pressSequentially(text, { delay: 50 });
@@ -66,6 +73,15 @@ test.describe('Búsqueda Manual Open Food Facts (E2E-04)', () => {
     await injectTestUser(page);
     await page.goto('/tabs/dashboard');
     await waitForDashboard(page);
+    // Ensure the product search is visible (dashboard has a toggle)
+    const toggle = page.locator('.show-search-btn');
+    await toggle.waitFor({ state: 'visible', timeout: 5000 });
+    const label = await toggle.innerText();
+    if (label.includes('Buscar producto')) {
+      await toggle.click();
+    }
+    // Ensure searchbar is ready
+    await page.waitForSelector('ion-searchbar', { state: 'visible', timeout: 5000 });
   });
 
   test('búsqueda con < 3 chars no muestra resultados', async ({ page }) => {

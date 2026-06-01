@@ -2,13 +2,14 @@ import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { IonContent, IonIcon } from '@ionic/angular/standalone';
 import { Router } from '@angular/router';
+import { FormsModule } from '@angular/forms';
 import { addIcons } from 'ionicons';
-import { flash, sparkles, cloudDone, arrowForward } from 'ionicons/icons';
+import { flash, sparkles, cloudDone, arrowForward, personOutline } from 'ionicons/icons';
 
 @Component({
   selector: 'app-onboarding',
   standalone: true,
-  imports: [CommonModule, IonContent, IonIcon],
+  imports: [CommonModule, IonContent, IonIcon, FormsModule],
   template: `
     <ion-content scroll-y="false">
       <div class="onboarding-root">
@@ -35,12 +36,36 @@ import { flash, sparkles, cloudDone, arrowForward } from 'ionicons/icons';
           </div>
 
           <!-- Slide 2 -->
-          <div class="slide" [class.active]="step === 2" [class.next]="step < 2">
+          <div class="slide" [class.active]="step === 2" [class.prev]="step > 2" [class.next]="step < 2">
             <div class="icon-wrapper blue">
               <ion-icon name="cloud-done"></ion-icon>
             </div>
             <h2>Sincronización Total</h2>
             <p>Inicia sesión con Google para mantener tu progreso seguro y sincronizado en todos tus dispositivos.</p>
+          </div>
+
+          <!-- Slide 3 (Profile Setup) -->
+          <div class="slide" [class.active]="step === 3" [class.next]="step < 3">
+            <div class="icon-wrapper accent">
+              <ion-icon name="person-outline"></ion-icon>
+            </div>
+            <h2>Conozcámonos</h2>
+            <p>Ingresa tus datos básicos para calcular tus metas iniciales.</p>
+            
+            <div class="profile-form">
+              <div class="input-row">
+                <input type="number" [(ngModel)]="currentWeight" placeholder="Peso actual" />
+                <span>kg</span>
+              </div>
+              <div class="input-row">
+                <input type="number" [(ngModel)]="goalWeight" placeholder="Peso meta" />
+                <span>kg</span>
+              </div>
+              <div class="input-row">
+                <input type="number" [(ngModel)]="height" placeholder="Estatura" />
+                <span>cm</span>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -50,16 +75,17 @@ import { flash, sparkles, cloudDone, arrowForward } from 'ionicons/icons';
             <div class="dot" [class.active]="step === 0"></div>
             <div class="dot" [class.active]="step === 1"></div>
             <div class="dot" [class.active]="step === 2"></div>
+            <div class="dot" [class.active]="step === 3"></div>
           </div>
 
           <!-- Controls -->
           <div class="controls">
-            <button class="skip-btn" (click)="skip()" *ngIf="step < 2">Saltar</button>
-            <div class="spacer" *ngIf="step === 2"></div>
+            <button class="skip-btn" (click)="skip()" *ngIf="step < 3">Saltar</button>
+            <div class="spacer" *ngIf="step === 3"></div>
             
-            <button class="next-btn" (click)="next()">
-              <span *ngIf="step < 2">Siguiente</span>
-              <span *ngIf="step === 2">Comenzar</span>
+            <button class="next-btn" (click)="next()" [disabled]="step === 3 && !isProfileValid()">
+              <span *ngIf="step < 3">Siguiente</span>
+              <span *ngIf="step === 3">Comenzar</span>
               <ion-icon name="arrow-forward"></ion-icon>
             </button>
           </div>
@@ -223,18 +249,39 @@ import { flash, sparkles, cloudDone, arrowForward } from 'ionicons/icons';
     .next-btn ion-icon {
       font-size: 20px;
     }
+    .profile-form {
+      display: flex; flex-direction: column; gap: 12px; margin-top: 24px;
+      max-width: 260px; margin-left: auto; margin-right: auto;
+    }
+    .input-row {
+      display: flex; align-items: center; background: var(--app-surface);
+      border: 1px solid var(--app-border); border-radius: 12px; padding: 4px 16px;
+    }
+    .input-row input {
+      flex: 1; background: transparent; border: none; color: var(--app-text);
+      font-size: 16px; padding: 12px 0; outline: none; font-family: inherit;
+    }
+    .input-row span { color: var(--app-muted); font-size: 14px; font-weight: 500; }
   `]
 })
 export class OnboardingComponent {
   private router = inject(Router);
   step = 0;
 
+  currentWeight = '';
+  goalWeight = '';
+  height = '';
+
   constructor() {
-    addIcons({ flash, sparkles, cloudDone, 'arrow-forward': arrowForward });
+    addIcons({ flash, sparkles, cloudDone, 'arrow-forward': arrowForward, 'person-outline': personOutline });
+  }
+
+  isProfileValid() {
+    return Number(this.currentWeight) > 20 && Number(this.goalWeight) > 20 && Number(this.height) > 100;
   }
 
   next() {
-    if (this.step < 2) {
+    if (this.step < 3) {
       this.step += 1;
       return;
     }
@@ -246,7 +293,18 @@ export class OnboardingComponent {
   }
 
   finish() {
-    try { localStorage.setItem('onboardingSeen', '1'); } catch (e) {}
+    try { 
+      localStorage.setItem('onboardingSeen', '1'); 
+      if (this.isProfileValid()) {
+        const profileStr = localStorage.getItem('user_profile');
+        let profile = profileStr ? JSON.parse(profileStr) : {};
+        profile.currentWeight = Number(this.currentWeight);
+        profile.startWeight = Number(this.currentWeight);
+        profile.goalWeight = Number(this.goalWeight);
+        profile.heightCm = Number(this.height);
+        localStorage.setItem('user_profile', JSON.stringify(profile));
+      }
+    } catch (e) {}
     this.router.navigate(['/login']);
   }
 }

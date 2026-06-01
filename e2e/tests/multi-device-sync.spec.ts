@@ -215,11 +215,13 @@ test.describe('Sincronización Multi-dispositivo (E2E-10)', () => {
     await page.goto('/tabs/dashboard');
 
     // After ~5s timeout, the app should stop hydrating without showing local cache
+    // Note: Wait for it to appear first, then wait for it to disappear
+    await expect(page.locator('.hydration-overlay')).toBeVisible();
     await expect(page.locator('.hydration-overlay')).not.toBeVisible({ timeout: 10000 });
     await expect(page.locator('.local-data-banner')).not.toBeVisible();
 
     // The dashboard shell should render even if the cloud never confirms data
-    await expect(page.locator('.top-row')).toBeVisible({ timeout: 3000 });
+    await expect(page.locator('app-hero-summary')).toBeVisible({ timeout: 3000 });
   });
 
   test('el sync badge muestra el estado correcto', async ({ page }) => {

@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
-import { IonicModule } from '@ionic/angular';
+import { IonicModule, ActionSheetController, ToastController } from '@ionic/angular';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { of, throwError } from 'rxjs';
 import { FoodSearchComponent } from './food-search.component';
@@ -153,5 +153,31 @@ describe('FoodSearchComponent (I-01 a I-05)', () => {
     component.portionGrams = 100;
     component.adjustGrams(25);
     expect(component.portionGrams).toBe(125);
+  });
+
+  it('I-06: confirmPortion() llama addFoodToMeal y muestra toast al elegir comida', async () => {
+    const prod = makeProduct();
+    component.selectedProduct.set(prod);
+    component.portionGrams = 150;
+
+    const actionSheetCtrl = TestBed.inject(ActionSheetController) as any;
+    spyOn(actionSheetCtrl, 'create').and.callFake(async (opts:any) => {
+      return {
+        present: async () => {
+          // Simulate selecting the first meal button
+          const btn = (opts.buttons || [])[0];
+          if (btn && typeof btn.handler === 'function') {
+            btn.handler();
+          }
+        }
+      } as any;
+    });
+
+    const toastCtrl = TestBed.inject(ToastController) as any;
+    spyOn(toastCtrl, 'create').and.returnValue(Promise.resolve({ present: async () => {} } as any));
+
+    await component.confirmPortion();
+
+    expect(nutritionState.addFoodToMeal).toHaveBeenCalled();
   });
 });

@@ -192,6 +192,30 @@ import { OutboxPanelComponent } from './outbox-panel.component';
         </div>
 
         <div class="form-row">
+          <label class="form-label">Carbos</label>
+          <div class="form-input-row">
+            <input class="form-input small"
+              type="number"
+              [ngModel]="draft.carbGoalOverride ?? state.goals().carbGoal"
+              (ngModelChange)="draft.carbGoalOverride = $event; markDirty()"
+              min="10" max="500"/>
+            <span class="form-unit">g</span>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <label class="form-label">Grasa</label>
+          <div class="form-input-row">
+            <input class="form-input small"
+              type="number"
+              [ngModel]="draft.fatGoalOverride ?? state.goals().fatGoal"
+              (ngModelChange)="draft.fatGoalOverride = $event; markDirty()"
+              min="10" max="500"/>
+            <span class="form-unit">g</span>
+          </div>
+        </div>
+
+        <div class="form-row">
           <label class="form-label">Agua</label>
           <div class="form-input-row">
             <input class="form-input small" type="number" [(ngModel)]="draft.waterGoal" min="1" max="20" (ngModelChange)="markDirty()"/>

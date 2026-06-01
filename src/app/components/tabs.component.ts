@@ -32,7 +32,7 @@ import {
 
         <ion-tab-button tab="camera" href="/tabs/camera">
           <ion-icon name="camera-outline"></ion-icon>
-          <ion-label>Cámara</ion-label>
+          <ion-label>Captura</ion-label>
         </ion-tab-button>
 
         <ion-tab-button tab="coach" href="/tabs/coach">

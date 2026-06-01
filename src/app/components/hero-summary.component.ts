@@ -1,4 +1,4 @@
-import { Component, inject, computed } from '@angular/core';
+import { Component, inject, computed, effect, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { IonicModule } from '@ionic/angular';
 import { NutritionStateService } from '../services/nutrition-state.service';
@@ -23,8 +23,8 @@ import { NutritionStateService } from '../services/nutrition-state.service';
             stroke-width="10"
             stroke-linecap="round"
             [style.stroke-dasharray]="circumference"
-            [style.stroke-dashoffset]="dashoffset()"
-            style="transition: stroke-dashoffset 0.6s ease, stroke 0.3s ease;"
+            [style.stroke-dashoffset]="animatedDashoffset()"
+            style="transition: stroke-dashoffset 1s cubic-bezier(0.2, 0.8, 0.2, 1), stroke 0.3s ease;"
             transform="rotate(-90 60 60)" />
           <!-- Center text -->
           <text x="60" y="52" text-anchor="middle" fill="#fff" font-size="26" font-weight="700"
@@ -190,15 +190,22 @@ export class HeroSummaryComponent {
     return this.circumference * (1 - Math.min(fraction, 1));
   });
 
+  animatedDashoffset = signal(this.circumference);
+
+  constructor() {
+    effect(() => {
+      const target = this.dashoffset();
+      setTimeout(() => this.animatedDashoffset.set(target), 100);
+    });
+  }
+
   proteinPercent = computed(() => Math.min((this.state.totalProtein() / this.state.goals().proteinGoal) * 100, 100));
   carbsPercent = computed(() => {
-    // Estimate: carbs fill ~50% of remaining calories from protein/fat
-    const remaining = this.state.calorieGoal() - (this.state.totalProtein() * 4) - (this.state.totalFat() * 9);
-    const carbGoalG = Math.max(remaining / 4, 100);
-    return Math.min((this.state.totalCarbs() / carbGoalG) * 100, 100);
+    const goal = this.state.goals().carbGoal;
+    return goal > 0 ? Math.min((this.state.totalCarbs() / goal) * 100, 100) : 0;
   });
   fatPercent = computed(() => {
-    const fatGoalG = (this.state.calorieGoal() * 0.25) / 9;
-    return Math.min((this.state.totalFat() / fatGoalG) * 100, 100);
+    const goal = this.state.goals().fatGoal;
+    return goal > 0 ? Math.min((this.state.totalFat() / goal) * 100, 100) : 0;
   });
 }

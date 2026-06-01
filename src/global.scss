@@ -49,7 +49,11 @@
   --app-muted: #7a8494;
   --app-border: rgba(255, 255, 255, 0.06);
 
-  --ion-font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --radius-sm: 12px;
+  --radius-md: 16px;
+  --radius-lg: 20px;
+
+  --ion-font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --ion-color-primary: #f0a844;
   --ion-color-primary-rgb: 240, 168, 68;
   --ion-color-primary-contrast: #111;
@@ -67,6 +71,34 @@
   --ion-toolbar-color: var(--app-text);
   --ion-item-background: transparent;
   --ion-card-background: var(--app-surface);
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    --app-bg: #f9f9fb;
+    --app-surface: #ffffff;
+    --app-surface-2: #f0f2f5;
+    --app-accent: #f0a844;
+    --app-accent-2: #0d9488; /* Darker teal for light mode contrast */
+    --app-text: #111827;
+    --app-muted: #6b7280;
+    --app-border: rgba(0, 0, 0, 0.08);
+    
+    --ion-color-primary-contrast: #fff;
+    --ion-color-success: #0d9488;
+  }
+}
+
+/* ─────────────────────────────────
+   Global Utilities
+   ───────────────────────────────── */
+.section-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--app-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.7px;
+  margin: 0 0 10px 2px;
 }
 
 /* ─────────────────────────────────

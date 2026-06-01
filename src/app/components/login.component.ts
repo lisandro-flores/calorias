@@ -43,6 +43,7 @@ declare var google: any;
   `,
   styles: [`
     .login-container {
+      position: relative;
       display: flex;
       flex-direction: column;
       justify-content: center;
@@ -50,15 +51,69 @@ declare var google: any;
       height: 100%;
       padding: 40px 24px;
       text-align: center;
+      overflow: hidden;
       background: var(--app-bg);
+    }
+
+    /* Ambient Backgrounds (from landing) */
+    .ambient-light {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(100px);
+      z-index: 0;
+      opacity: 0.5;
+      animation: drift 15s infinite alternate ease-in-out;
+    }
+    .light-1 {
+      top: -15%; right: -10%; width: 400px; height: 400px;
+      background: rgba(0, 153, 255, 0.4);
+      animation-delay: 0s;
+    }
+    .light-2 {
+      bottom: -15%; left: -10%; width: 500px; height: 500px;
+      background: rgba(255, 64, 129, 0.3);
+      animation-delay: -5s;
+    }
+    .light-3 {
+      top: 40%; left: 50%; width: 300px; height: 300px;
+      background: rgba(0, 230, 118, 0.15);
+      transform: translateX(-50%);
+      animation-delay: -10s;
+    }
+
+    .grid-overlay {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-image: linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+                        linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+      background-size: 30px 30px;
+      z-index: 1;
+      mask-image: radial-gradient(circle at center, black 0%, transparent 80%);
+      -webkit-mask-image: radial-gradient(circle at center, black 0%, transparent 80%);
+    }
+
+    @keyframes drift {
+      0% { transform: translate(0, 0) scale(1); }
+      100% { transform: translate(40px, -40px) scale(1.2); }
+    }
+
+    .brand, .auth-section {
+      position: relative;
+      z-index: 10;
     }
 
     .brand {
       margin-bottom: 60px;
+      animation: fadeUp 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+    }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(30px); }
+      to { opacity: 1; transform: translateY(0); }
     }
     .brand-icon {
       font-size: 56px;
       margin-bottom: 16px;
+      color: var(--app-accent);
     }
     h1 {
       font-size: 32px;
@@ -81,6 +136,9 @@ declare var google: any;
       flex-direction: column;
       align-items: center;
       gap: 20px;
+      animation: fadeUp 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+      animation-delay: 0.2s;
+      opacity: 0;
     }
     .google-btn {
       display: flex;
@@ -103,7 +161,7 @@ declare var google: any;
       transform: translateY(1px);
     }
     .skip-btn {
-      background: none;
+      background: rgba(255,255,255,0.05);
       border: 1px solid var(--app-border);
       border-radius: 20px;
       padding: 10px 24px;
@@ -115,6 +173,7 @@ declare var google: any;
     }
     .skip-btn:active {
       background: var(--app-surface);
+      transform: scale(0.96);
     }
   `]
 })

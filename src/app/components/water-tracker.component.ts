@@ -1,6 +1,7 @@
 import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { IonicModule } from '@ionic/angular';
+import { Haptics, ImpactStyle } from '@capacitor/haptics';
 import { NutritionStateService } from '../services/nutrition-state.service';
 
 @Component({
@@ -18,10 +19,10 @@ import { NutritionStateService } from '../services/nutrition-state.service';
           </div>
         </div>
         <div class="water-controls">
-          <button class="water-btn minus" (click)="state.removeWater()" [disabled]="state.waterGlasses() === 0">
+          <button class="water-btn minus" (click)="removeWater()" [disabled]="state.waterGlasses() === 0">
             <ion-icon name="remove"></ion-icon>
           </button>
-          <button class="water-btn plus" (click)="state.addWater()">
+          <button class="water-btn plus" (click)="addWater()">
             <ion-icon name="add"></ion-icon>
           </button>
         </div>
@@ -124,5 +125,15 @@ export class WaterTrackerComponent {
 
   get waterDots(): number[] {
     return Array.from({ length: this.state.goals().waterGoal }, (_, i) => i);
+  }
+
+  async addWater() {
+    this.state.addWater();
+    try { await Haptics.impact({ style: ImpactStyle.Light }); } catch (e) {}
+  }
+
+  async removeWater() {
+    this.state.removeWater();
+    try { await Haptics.impact({ style: ImpactStyle.Light }); } catch (e) {}
   }
 }
