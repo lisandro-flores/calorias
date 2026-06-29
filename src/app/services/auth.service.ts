@@ -1,5 +1,4 @@
-import { Injectable, signal, inject, effect } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { Injectable, signal, effect } from '@angular/core';
 
 import { environment } from '../../environments/environment';
 
@@ -15,8 +14,6 @@ export interface UserProfile {
   providedIn: 'root'
 })
 export class AuthService {
-  private http = inject(HttpClient);
-
   // Estado global reactivo para el usuario cargando del almacenamiento local si existe
   currentUser = signal<UserProfile | null>(this.loadStoredUser());
 

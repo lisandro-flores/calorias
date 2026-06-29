@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { DestroyRef, Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Subject } from 'rxjs';
 import { environment } from '../../environments/environment';
@@ -19,16 +19,24 @@ const STORAGE_KEY = 'outbox_v1';
 
 @Injectable({ providedIn: 'root' })
 export class OutboxService {
+  private destroyRef = inject(DestroyRef);
   private queue: OutboxItem[] = [];
   public pending$ = new BehaviorSubject<number>(0);
   public syncComplete$ = new Subject<{ type: OutboxItemType; payload: any }>();
   private processing = false;
+  private intervalId: ReturnType<typeof setInterval> | null = null;
+  private onlineHandler = () => this.processQueue();
 
   constructor(private http: HttpClient) {
     this.load();
     // process periodically and on online
-    setInterval(() => this.processQueue(), 20_000);
-    window.addEventListener('online', () => this.processQueue());
+    this.intervalId = setInterval(() => this.processQueue(), 20_000);
+    window.addEventListener('online', this.onlineHandler);
+
+    this.destroyRef.onDestroy(() => {
+      if (this.intervalId) clearInterval(this.intervalId);
+      window.removeEventListener('online', this.onlineHandler);
+    });
   }
 
   private save() {

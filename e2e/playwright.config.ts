@@ -7,6 +7,12 @@ export default defineConfig({
   fullyParallel: false,
   retries: 0,
   workers: 1,
+  webServer: {
+    command: 'npm run start -- --host 127.0.0.1 --port 8100',
+    url: 'http://127.0.0.1:8100',
+    reuseExistingServer: !process.env.CI,
+    timeout: 120_000,
+  },
   use: {
     baseURL: process.env.E2E_BASE_URL || 'http://localhost:8100',
     headless: true,

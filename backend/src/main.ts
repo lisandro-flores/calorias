@@ -1,7 +1,9 @@
 import { NestFactory } from '@nestjs/core';
+import { Logger, ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
+  const logger = new Logger('Bootstrap');
   const app = await NestFactory.create(AppModule);
 
   // Restringir CORS a los orígenes conocidos
@@ -14,8 +16,18 @@ async function bootstrap() {
     credentials: true,
   });
 
-  // Usar explícitamente 0.0.0.0 previene el choque de EADDRINUSE con IPv6 (::)
-  await app.listen(process.env.PORT ?? 3000, '0.0.0.0');
-}
-bootstrap();
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
+      transformOptions: { enableImplicitConversion: true },
+    }),
+  );
 
+  // Usar explícitamente 0.0.0.0 previene el choque de EADDRINUSE con IPv6 (::)
+  const port = process.env.PORT ?? 3000;
+  await app.listen(port, '0.0.0.0');
+  logger.log(`FuelSmart API listening on ${port}`);
+}
+void bootstrap();

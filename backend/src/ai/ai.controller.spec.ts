@@ -2,10 +2,12 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { BadRequestException, HttpException } from '@nestjs/common';
 import { AiController } from './ai.controller';
 import { AiService } from './ai.service';
+import { AiRateLimitService } from './ai-rate-limit.service';
 
 describe('AiController', () => {
   let controller: AiController;
   let service: AiService;
+  let rateLimit: AiRateLimitService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -18,12 +20,21 @@ describe('AiController', () => {
             getCoachAdvice: jest.fn(),
           },
         },
+        {
+          provide: AiRateLimitService,
+          useValue: {
+            assertAllowed: jest.fn(),
+          },
+        },
       ],
     }).compile();
 
     controller = module.get<AiController>(AiController);
     service = module.get<AiService>(AiService);
+    rateLimit = module.get<AiRateLimitService>(AiRateLimitService);
   });
+
+  const req = { user: { id: 'user123' } } as any;
 
   describe('parseMeal', () => {
     it('should call parseMealText with text', async () => {
@@ -41,16 +52,17 @@ describe('AiController', () => {
 
       jest.spyOn(service, 'parseMealText').mockResolvedValue(mockMeals);
 
-      const result = await controller.parseMeal('2 huevos revueltos');
+      const result = await controller.parseMeal(req, { text: '2 huevos revueltos' });
 
       expect(result).toEqual(mockMeals);
+      expect(rateLimit.assertAllowed).toHaveBeenCalledWith(req.user.id);
       expect(service.parseMealText).toHaveBeenCalledWith('2 huevos revueltos');
     });
 
     it('should return empty array on success', async () => {
       jest.spyOn(service, 'parseMealText').mockResolvedValue([]);
 
-      const result = await controller.parseMeal('xyz');
+      const result = await controller.parseMeal(req, { text: 'xyz' });
 
       expect(result).toEqual([]);
     });
@@ -60,7 +72,7 @@ describe('AiController', () => {
         .spyOn(service, 'parseMealText')
         .mockRejectedValue(new BadRequestException('MISSING_API_KEY'));
 
-      await expect(controller.parseMeal('text')).rejects.toThrow(BadRequestException);
+      await expect(controller.parseMeal(req, { text: 'text' })).rejects.toThrow(BadRequestException);
     });
   });
 
@@ -72,9 +84,10 @@ describe('AiController', () => {
 
       jest.spyOn(service, 'getCoachAdvice').mockResolvedValue(advice);
 
-      const result = await controller.getCoachAdvice({ profile, meals });
+      const result = await controller.getCoachAdvice(req, { profile, meals });
 
       expect(result).toEqual({ advice });
+      expect(rateLimit.assertAllowed).toHaveBeenCalledWith(req.user.id);
     });
 
     it('should pass profile and meals to service', async () => {
@@ -83,7 +96,7 @@ describe('AiController', () => {
 
       jest.spyOn(service, 'getCoachAdvice').mockResolvedValue('test advice');
 
-      await controller.getCoachAdvice({ profile, meals });
+      await controller.getCoachAdvice(req, { profile, meals });
 
       expect(service.getCoachAdvice).toHaveBeenCalledWith(profile, meals);
     });
@@ -93,7 +106,7 @@ describe('AiController', () => {
         .spyOn(service, 'getCoachAdvice')
         .mockRejectedValue(new HttpException('Error', 500));
 
-      await expect(controller.getCoachAdvice({} as any)).rejects.toThrow(HttpException);
+      await expect(controller.getCoachAdvice(req, {} as any)).rejects.toThrow(HttpException);
     });
   });
 });

@@ -29,6 +29,7 @@ describe('EntriesController', () => {
           useValue: {
             saveEntry: jest.fn(),
             getEntry: jest.fn(),
+            getRecentEntries: jest.fn(),
           },
         },
       ],
@@ -38,24 +39,11 @@ describe('EntriesController', () => {
     service = module.get<EntriesService>(EntriesService);
   });
 
+  const req = { user: { id: '000000000000000000000001' } } as any;
+
   describe('syncEntry', () => {
-    it('should reject request without userId', async () => {
-      const body = {
-        userId: '',
-        date: '2024-05-26',
-        meals: [],
-        waterGlasses: 0,
-      };
-
-      const result = await controller.syncEntry(body);
-
-      expect(result.success).toBe(false);
-      expect(result.message).toBe('Missing userId');
-    });
-
     it('should sync entry with valid data', async () => {
       const body = {
-        userId: '000000000000000000000001',
         date: '2024-05-26',
         meals: mockEntry.meals,
         waterGlasses: 3,
@@ -63,13 +51,13 @@ describe('EntriesController', () => {
 
       jest.spyOn(service, 'saveEntry').mockResolvedValue({ entry: mockEntry, merged: false });
 
-      const result = await controller.syncEntry(body);
+      const result = await controller.syncEntry(body, req);
 
       expect(result.success).toBe(true);
       expect(result.data).toEqual(mockEntry);
       expect(result.merged).toBe(false);
       expect(service.saveEntry).toHaveBeenCalledWith(
-        body.userId,
+        req.user.id,
         body.date,
         body.meals,
         body.waterGlasses,
@@ -80,7 +68,6 @@ describe('EntriesController', () => {
 
     it('should handle multiple meals', async () => {
       const body = {
-        userId: 'user123',
         date: '2024-05-26',
         meals: [
           { name: 'Desayuno', calories: 500 },
@@ -92,7 +79,7 @@ describe('EntriesController', () => {
       const entryWithMeals = { ...mockEntry, meals: body.meals, version: 1 };
       jest.spyOn(service, 'saveEntry').mockResolvedValue({ entry: entryWithMeals, merged: false });
 
-      const result = await controller.syncEntry(body);
+      const result = await controller.syncEntry(body, req);
 
       expect(result.success).toBe(true);
       expect(result.data.meals.length).toBe(2);
@@ -101,27 +88,20 @@ describe('EntriesController', () => {
   });
 
   describe('getDayEntry', () => {
-    it('should reject request without userId', async () => {
-      const result = await controller.getDayEntry('2024-05-26', '');
-
-      expect(result.success).toBe(false);
-      expect(result.message).toBe('Missing userId');
-    });
-
-    it('should retrieve entry for valid date and userId', async () => {
+    it('should retrieve entry for valid date and authenticated user', async () => {
       jest.spyOn(service, 'getEntry').mockResolvedValue(mockEntry);
 
-      const result = await controller.getDayEntry('2024-05-26', 'user123');
+      const result = await controller.getDayEntry('2024-05-26', req);
 
       expect(result.success).toBe(true);
       expect(result.data).toEqual(mockEntry);
-      expect(service.getEntry).toHaveBeenCalledWith('user123', '2024-05-26');
+      expect(service.getEntry).toHaveBeenCalledWith(req.user.id, '2024-05-26');
     });
 
     it('should return null if entry does not exist', async () => {
       jest.spyOn(service, 'getEntry').mockResolvedValue(null);
 
-      const result = await controller.getDayEntry('2024-05-26', 'user123');
+      const result = await controller.getDayEntry('2024-05-26', req);
 
       expect(result.success).toBe(true);
       expect(result.data).toBeNull();
@@ -130,9 +110,21 @@ describe('EntriesController', () => {
     it('should handle different date formats', async () => {
       jest.spyOn(service, 'getEntry').mockResolvedValue(mockEntry);
 
-      await controller.getDayEntry('2025-12-31', 'user123');
+      await controller.getDayEntry('2025-12-31', req);
 
-      expect(service.getEntry).toHaveBeenCalledWith('user123', '2025-12-31');
+      expect(service.getEntry).toHaveBeenCalledWith(req.user.id, '2025-12-31');
+    });
+  });
+
+  describe('getRangeEntries', () => {
+    it('should retrieve entries for the authenticated user', async () => {
+      jest.spyOn(service, 'getRecentEntries').mockResolvedValue([mockEntry] as any);
+
+      const result = await controller.getRangeEntries(req, '7');
+
+      expect(result.success).toBe(true);
+      expect(result.data).toEqual([mockEntry]);
+      expect(service.getRecentEntries).toHaveBeenCalledWith(req.user.id, 7);
     });
   });
 });

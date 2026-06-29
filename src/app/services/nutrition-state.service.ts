@@ -1,4 +1,4 @@
-import { Injectable, signal, computed, effect, inject } from '@angular/core';
+import { DestroyRef, Injectable, signal, computed, effect, inject } from '@angular/core';
 import { DOCUMENT } from '@angular/common';
 import { AuthService } from './auth.service';
 import { HttpClient } from '@angular/common/http';
@@ -161,8 +161,8 @@ export class NutritionStateService {
   goals = computed<UserGoals>(() => {
     const p = this.userProfile();
     const cals = this.calorieGoal();
-    const goalWeight = p.goalWeight > 0 ? p.goalWeight : p.currentWeight;
-    const defaultProtein = Math.round(goalWeight * 2);
+    const referenceWeight = p.currentWeight > 0 ? p.currentWeight : p.goalWeight;
+    const defaultProtein = Math.round(referenceWeight * 1.8);
     const defaultCarb = Math.round((cals * 0.40) / 4);
     const defaultFat = Math.round((cals - (defaultProtein * 4) - (defaultCarb * 4)) / 9);
 
@@ -215,8 +215,10 @@ export class NutritionStateService {
   private toastCtrl = inject(ToastController);
   private outbox = inject(OutboxService);
   private document = inject(DOCUMENT);
+  private destroyRef = inject(DestroyRef);
   private syncTimeout: any;
   private profileSyncTimeout: any;
+  private hydrationTimeout: ReturnType<typeof setTimeout> | null = null;
   private midnightTimeout: ReturnType<typeof setTimeout> | null = null;
   private refreshInterval: ReturnType<typeof setInterval> | null = null;
   private isSyncing = false;
@@ -232,7 +234,7 @@ export class NutritionStateService {
 
     // Timeout fallback: if hydration hasn't finished in 5s, stop waiting for cloud
     // but do not surface unconfirmed local data.
-    setTimeout(() => {
+    this.hydrationTimeout = setTimeout(() => {
       if (this.isHydrating) {
         console.warn('Cloud hydration timed out, keeping cloud-only data state');
         this.isHydrating = false;
@@ -241,7 +243,7 @@ export class NutritionStateService {
     }, 5000);
 
     // reflect outbox pending items in sync status
-    this.outbox.pending$.subscribe(n => {
+    const pendingSubscription = this.outbox.pending$.subscribe(n => {
       if (this.isHydrating) return;
       if (n > 0) {
         this.syncStatus.set('pending');
@@ -259,7 +261,7 @@ export class NutritionStateService {
     this.document.addEventListener('visibilitychange', this.handleVisibilityOrFocusChange);
 
     // Fase 5: Re-fetch post-push — when entry-sync completes, pull fresh data
-    this.outbox.syncComplete$.subscribe(event => {
+    const syncCompleteSubscription = this.outbox.syncComplete$.subscribe(event => {
       if (event.type === 'entry-sync' && !this.isHydrating) {
         if (event.payload?.date === this.todayKey) {
           this.hasPendingLocalEntryChanges = false;
@@ -322,6 +324,24 @@ export class NutritionStateService {
       if (!this.isSyncing && !this.isHydrating) {
         this.syncProfileToMongo();
       }
+    });
+
+    this.destroyRef.onDestroy(() => {
+      pendingSubscription.unsubscribe();
+      syncCompleteSubscription.unsubscribe();
+
+      if (this.syncTimeout) clearTimeout(this.syncTimeout);
+      if (this.profileSyncTimeout) clearTimeout(this.profileSyncTimeout);
+      if (this.hydrationTimeout) clearTimeout(this.hydrationTimeout);
+      if (this.midnightTimeout) clearTimeout(this.midnightTimeout);
+      if (this.refreshInterval) clearInterval(this.refreshInterval);
+
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('focus', this.handleVisibilityOrFocusChange);
+        window.removeEventListener('online', this.handleVisibilityOrFocusChange);
+        window.removeEventListener('auth:login-success', this.handleLoginSuccess);
+      }
+      this.document.removeEventListener('visibilitychange', this.handleVisibilityOrFocusChange);
     });
   }
 
@@ -407,7 +427,6 @@ export class NutritionStateService {
     this.profileSyncTimeout = setTimeout(() => {
       // enqueue profile update to outbox instead of posting directly
       this.outbox.enqueue('profile-sync', {
-        userId: user.id,
         profile,
         recentFoods: this.recentFoods().slice(0, 15),
       });
@@ -429,7 +448,6 @@ export class NutritionStateService {
     this.syncTimeout = setTimeout(() => {
       // enqueue entry sync to outbox for reliable delivery (Fase 3: include expectedVersion)
       this.outbox.enqueue('entry-sync', {
-        userId: user.id,
         date: this.todayKey,
         meals: this.meals(),
         waterGlasses: this.waterGlasses(),
@@ -449,7 +467,7 @@ export class NutritionStateService {
       return;
     }
 
-    this.http.get<any>(`${environment.apiUrl}/entries/day?date=${this.todayKey}&userId=${user.id}`)
+    this.http.get<any>(`${environment.apiUrl}/entries/day?date=${this.todayKey}`)
       .subscribe({
         next: (res) => {
           const entry = this.extractDayEntryPayload(res);
@@ -525,7 +543,7 @@ export class NutritionStateService {
       return;
     }
 
-    this.http.get<any>(`${environment.apiUrl}/auth/profile?userId=${user.id}`)
+    this.http.get<any>(`${environment.apiUrl}/auth/profile`)
       .subscribe({
         next: (res) => {
           const data = res?.data ?? res;
@@ -577,7 +595,7 @@ export class NutritionStateService {
       return;
     }
 
-    this.http.get<any>(`${environment.apiUrl}/entries/range?userId=${user.id}&days=30`)
+    this.http.get<any>(`${environment.apiUrl}/entries/range?days=30`)
       .subscribe({
         next: (res) => {
           const entries = res?.data ?? [];

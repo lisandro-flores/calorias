@@ -23,6 +23,8 @@ describe('AuthController', () => {
           provide: AuthService,
           useValue: {
             verifyGoogleTokenAndLogin: jest.fn(),
+            getUserProfile: jest.fn(),
+            updateUserProfile: jest.fn(),
           },
         },
       ],
@@ -62,6 +64,34 @@ describe('AuthController', () => {
       await expect(controller.googleLogin('invalid_token')).rejects.toThrow(
         UnauthorizedException,
       );
+    });
+  });
+
+  describe('profile', () => {
+    const req = { user: { id: '000000000000000000000001' } } as any;
+
+    it('should get the authenticated user profile', async () => {
+      jest.spyOn(service, 'getUserProfile').mockResolvedValue(mockUser);
+
+      const result = await controller.getProfile(req);
+
+      expect(result).toEqual(mockUser);
+      expect(service.getUserProfile).toHaveBeenCalledWith(req.user.id);
+    });
+
+    it('should update the authenticated user profile', async () => {
+      jest.spyOn(service, 'updateUserProfile').mockResolvedValue(mockUser);
+
+      const result = await controller.updateProfile(req, {
+        profile: { displayName: 'Tester' },
+        recentFoods: [],
+      });
+
+      expect(result).toEqual(mockUser);
+      expect(service.updateUserProfile).toHaveBeenCalledWith(req.user.id, {
+        displayName: 'Tester',
+        recentFoods: [],
+      });
     });
   });
 });

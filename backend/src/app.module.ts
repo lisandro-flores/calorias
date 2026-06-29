@@ -5,10 +5,12 @@ import { AuthController } from './auth/auth.controller';
 import { AuthService } from './auth/auth.service';
 import { AiController } from './ai/ai.controller';
 import { AiService } from './ai/ai.service';
+import { AiRateLimitService } from './ai/ai-rate-limit.service';
 import { User, UserSchema } from './users/schemas/user.schema';
 import { Entry, EntrySchema } from './entries/schemas/entry.schema';
 import { EntriesController } from './entries/entries.controller';
 import { EntriesService } from './entries/entries.service';
+import { JwtAuthGuard } from './auth/jwt-auth.guard';
 
 @Module({
   imports: [
@@ -20,6 +22,6 @@ import { EntriesService } from './entries/entries.service';
     ])
   ],
   controllers: [AuthController, AiController, EntriesController],
-  providers: [AuthService, AiService, EntriesService],
+  providers: [AuthService, AiService, AiRateLimitService, EntriesService, JwtAuthGuard],
 })
 export class AppModule {}

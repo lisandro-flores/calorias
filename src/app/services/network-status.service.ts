@@ -1,31 +1,41 @@
-import { Injectable, signal } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { DestroyRef, Injectable, inject, signal } from '@angular/core';
 
 @Injectable({
   providedIn: 'root'
 })
 export class NetworkStatusService {
+  private destroyRef = inject(DestroyRef);
   isOnline = signal<boolean>(true);
+  private intervalId: ReturnType<typeof setInterval> | null = null;
   
-  constructor(private http: HttpClient) {
+  constructor() {
     this.initNetworkListeners();
     this.checkRealConnectivity();
     
     // Check every 30s as in the provided model
-    setInterval(() => {
+    this.intervalId = setInterval(() => {
       this.checkRealConnectivity();
     }, 30000);
+
+    this.destroyRef.onDestroy(() => {
+      if (this.intervalId) clearInterval(this.intervalId);
+      window.removeEventListener('online', this.handleOnline);
+      window.removeEventListener('offline', this.handleOffline);
+    });
   }
 
   private initNetworkListeners() {
-    window.addEventListener('online', () => {
-      this.checkRealConnectivity();
-    });
-    
-    window.addEventListener('offline', () => {
-      this.isOnline.set(false);
-    });
+    window.addEventListener('online', this.handleOnline);
+    window.addEventListener('offline', this.handleOffline);
   }
+
+  private handleOnline = () => {
+    this.checkRealConnectivity();
+  };
+
+  private handleOffline = () => {
+    this.isOnline.set(false);
+  };
 
   /**
    * Pings a lightweight endpoint to ensure actual internet access, 

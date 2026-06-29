@@ -15,8 +15,17 @@ describe('AppController', () => {
   });
 
   describe('root', () => {
-    it('should return "Hello World!"', () => {
-      expect(appController.getHello()).toBe('Hello World!');
+    it('should return the API name', () => {
+      expect(appController.getHello()).toBe('FuelSmart API');
+    });
+  });
+
+  describe('health', () => {
+    it('should return a health payload', () => {
+      expect(appController.getHealth()).toMatchObject({
+        status: 'ok',
+        service: 'fuelsmart-api',
+      });
     });
   });
 });

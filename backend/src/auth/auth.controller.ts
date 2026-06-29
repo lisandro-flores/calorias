@@ -1,5 +1,8 @@
-import { Controller, Post, Body, Get, Patch, Query } from '@nestjs/common';
+import { Body, Controller, Get, Patch, Post, Req, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
+import { JwtAuthGuard } from './jwt-auth.guard';
+import type { AuthenticatedRequest } from './jwt-auth.guard';
+import { UpdateProfileDto } from './dto/update-profile.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -11,13 +14,18 @@ export class AuthController {
   }
 
   @Get('profile')
-  async getProfile(@Query('userId') userId: string) {
-    return this.authService.getUserProfile(userId);
+  @UseGuards(JwtAuthGuard)
+  async getProfile(@Req() req: AuthenticatedRequest) {
+    return this.authService.getUserProfile(req.user.id);
   }
 
   @Patch('profile')
-  async updateProfile(@Body() body: { userId: string, profile: any, recentFoods?: any[] }) {
-    return this.authService.updateUserProfile(body.userId, {
+  @UseGuards(JwtAuthGuard)
+  async updateProfile(
+    @Req() req: AuthenticatedRequest,
+    @Body() body: UpdateProfileDto,
+  ) {
+    return this.authService.updateUserProfile(req.user.id, {
       ...body.profile,
       recentFoods: body.recentFoods ?? body.profile?.recentFoods ?? [],
     });
