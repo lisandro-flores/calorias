@@ -127,6 +127,9 @@ import { NutritionStateService } from '../services/nutrition-state.service';
   styles: [`
     .search-wrapper { margin-bottom: 16px; position: relative; }
     ion-searchbar {
+      display: block;
+      width: 100%;
+      min-height: 48px;
       padding: 0;
       --background: var(--app-surface);
       --border-radius: 12px;

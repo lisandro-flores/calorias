@@ -232,12 +232,13 @@ export class NutritionStateService {
     this.pullHistoryFromMongo(true);
     this.scheduleNextDateCheck();
 
-    // Timeout fallback: if hydration hasn't finished in 5s, stop waiting for cloud
-    // but do not surface unconfirmed local data.
+    // Timeout fallback: if hydration hasn't finished in 5s, show local data
+    // with an explicit source indicator instead of leaving the user guessing.
     this.hydrationTimeout = setTimeout(() => {
       if (this.isHydrating) {
-        console.warn('Cloud hydration timed out, keeping cloud-only data state');
+        console.warn('Cloud hydration timed out, falling back to local data');
         this.isHydrating = false;
+        this.useLocalFallback();
         this.dataReady.set(true);
       }
     }, 5000);
@@ -387,8 +388,18 @@ export class NutritionStateService {
     if (this.initialHydrationStepsRemaining === 0) {
       this.isHydrating = false;
       this.dataReady.set(true);
-      this.dataSource.set('cloud');
+      if (this.dataSource() === 'loading') {
+        this.dataSource.set('cloud');
+      }
     }
+  }
+
+  private useLocalFallback() {
+    if (this.dataSource() === 'local') return;
+    this.dataSource.set('local');
+    this.meals.set(this.loadTodayMealsFromLocal());
+    this.waterGlasses.set(this.loadTodayWaterFromLocal());
+    this.userProfile.set(this.loadProfileFromLocal());
   }
 
   private scheduleNextDateCheck() {
@@ -461,6 +472,7 @@ export class NutritionStateService {
   private pullFromMongo(trackHydration = false) {
     const user = this.authService.currentUser();
     if (!user || user.id === 'offline_mode') {
+      this.dataSource.set('local');
       if (trackHydration) {
         this.finishInitialHydrationStep();
       }
@@ -511,6 +523,9 @@ export class NutritionStateService {
         error: (err) => {
           console.error('Error al recuperar datos de Mongo', err);
           if (trackHydration) {
+            this.useLocalFallback();
+          }
+          if (trackHydration) {
             this.finishInitialHydrationStep();
           }
         }
@@ -537,6 +552,7 @@ export class NutritionStateService {
   private pullProfileFromMongo(trackHydration = false) {
     const user = this.authService.currentUser();
     if (!user || user.id === 'offline_mode') {
+      this.dataSource.set('local');
       if (trackHydration) {
         this.finishInitialHydrationStep();
       }
@@ -580,6 +596,9 @@ export class NutritionStateService {
         error: (err) => {
           console.error('Error al recuperar perfil de Mongo', err);
           if (trackHydration) {
+            this.useLocalFallback();
+          }
+          if (trackHydration) {
             this.finishInitialHydrationStep();
           }
         }
@@ -589,6 +608,7 @@ export class NutritionStateService {
   private pullHistoryFromMongo(trackHydration = false) {
     const user = this.authService.currentUser();
     if (!user || user.id === 'offline_mode') {
+      this.dataSource.set('local');
       if (trackHydration) {
         this.finishInitialHydrationStep();
       }
@@ -622,6 +642,9 @@ export class NutritionStateService {
         },
         error: (err) => {
           console.error('Error al recuperar historial de Mongo', err);
+          if (trackHydration) {
+            this.useLocalFallback();
+          }
           if (trackHydration) {
             this.finishInitialHydrationStep();
           }
@@ -815,6 +838,12 @@ export class NutritionStateService {
     this.markTodayDirty();
     this.meals.set(DEFAULT_MEALS.map(m => ({ ...m, foods: [] })));
     this.waterGlasses.set(0);
+  }
+
+  retrySync() {
+    this.syncStatus.set('syncing');
+    this.outbox.processQueue();
+    this.refreshFromServer();
   }
 
   private markTodayDirty() {

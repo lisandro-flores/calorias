@@ -10,6 +10,8 @@
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
     "e2e:install": "npx playwright install --with-deps",
+    "e2e:build": "ng build",
+    "e2e:serve": "node e2e/serve-static.mjs www 8100 127.0.0.1",
     "e2e:test": "npx playwright test -c e2e/playwright.config.ts",
     "lint": "ng lint"
   },

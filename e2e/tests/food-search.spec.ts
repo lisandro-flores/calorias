@@ -40,27 +40,24 @@ const MOCK_OFF_RESPONSE = {
   ],
 };
 
-/**
- * Helper: types into ion-searchbar using real keystrokes.
- * ion-searchbar wraps a native <input> inside shadow DOM and the Angular
- * FormControl only picks up changes through real `input` / `keydown` events,
- * NOT programmatic `fill()`.
- */
 async function typeInSearchbar(page: import('@playwright/test').Page, text: string) {
-  // Wait for the ion-searchbar to be attached
   const searchbar = page.locator('ion-searchbar');
   await expect(searchbar).toBeVisible({ timeout: 5000 });
 
-  // Access the native input inside the shadow root
-  const input = searchbar.locator('input');
-  
-  // Try to wait for input to be attached in shadow root
-  await input.waitFor({ state: 'attached', timeout: 5000 }).catch(() => {});
-  
-  await input.click();
-  await input.fill('');
-  // Type character by character to trigger Angular reactive forms
-  await input.pressSequentially(text, { delay: 50 });
+  await searchbar.evaluate(async (element, value) => {
+    const search = element as any;
+    search.value = value;
+    search.dispatchEvent(new CustomEvent('ionInput', {
+      bubbles: true,
+      composed: true,
+      detail: { value },
+    }));
+    search.dispatchEvent(new CustomEvent('ionChange', {
+      bubbles: true,
+      composed: true,
+      detail: { value },
+    }));
+  }, text);
 }
 
 test.describe('Búsqueda Manual Open Food Facts (E2E-04)', () => {

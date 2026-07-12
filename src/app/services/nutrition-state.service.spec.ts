@@ -644,6 +644,7 @@ describe('NutritionStateService', () => {
       (service as any).isHydrating = true;
       (service as any).initialHydrationStepsRemaining = 3;
       service.dataReady.set(false);
+      service.dataSource.set('loading');
 
       (service as any).finishInitialHydrationStep();
       expect(service.dataReady()).toBe(false); // 2 remaining

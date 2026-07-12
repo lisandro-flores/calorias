@@ -45,7 +45,7 @@ export class OutboxService {
     } catch (e) {
       console.error('Outbox save failed', e);
     }
-    this.pending$.next(this.queue.filter(i => i.status === 'pending' || i.status === 'in-flight').length);
+    this.pending$.next(this.queue.filter(i => i.status === 'pending' || i.status === 'in-flight' || i.status === 'failed').length);
   }
 
   private load() {
@@ -56,7 +56,7 @@ export class OutboxService {
       console.error('Outbox load failed', e);
       this.queue = [];
     }
-    this.pending$.next(this.queue.filter(i => i.status === 'pending' || i.status === 'in-flight').length);
+    this.pending$.next(this.queue.filter(i => i.status === 'pending' || i.status === 'in-flight' || i.status === 'failed').length);
   }
 
   private getDedupeKey(type: OutboxItemType, payload: any): string {
