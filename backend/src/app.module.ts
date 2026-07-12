@@ -1,6 +1,8 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ConfigModule } from '@nestjs/config';
+import { AppController } from './app.controller';
+import { AppService } from './app.service';
 import { AuthController } from './auth/auth.controller';
 import { AuthService } from './auth/auth.service';
 import { AiController } from './ai/ai.controller';
@@ -21,7 +23,7 @@ import { JwtAuthGuard } from './auth/jwt-auth.guard';
       { name: Entry.name, schema: EntrySchema }
     ])
   ],
-  controllers: [AuthController, AiController, EntriesController],
-  providers: [AuthService, AiService, AiRateLimitService, EntriesService, JwtAuthGuard],
+  controllers: [AppController, AuthController, AiController, EntriesController],
+  providers: [AppService, AuthService, AiService, AiRateLimitService, EntriesService, JwtAuthGuard],
 })
 export class AppModule {}
