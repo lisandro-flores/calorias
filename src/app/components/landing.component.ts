@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { IonContent, IonIcon } from '@ionic/angular/standalone';
 import { Router } from '@angular/router';
 import { addIcons } from 'ionicons';
-import { scan, bulb, leaf, arrowForward } from 'ionicons/icons';
+import { scan, bulb, leaf, arrowForward, logoAndroid } from 'ionicons/icons';
 
 @Component({
   selector: 'app-landing',
@@ -62,6 +62,10 @@ import { scan, bulb, leaf, arrowForward } from 'ionicons/icons';
               <span class="btn-text">Comenzar mi viaje</span>
               <ion-icon name="arrow-forward"></ion-icon>
             </button>
+            <a href="https://github.com/lisandro-flores/calorias/releases/download/latest/fuelsmart.apk" class="apk-btn">
+              <ion-icon name="logo-android"></ion-icon>
+              <span class="btn-text">Descargar APK (Android)</span>
+            </a>
             <p class="sub-cta">Sincronización en la nube incluida</p>
           </div>
         </div>
@@ -308,6 +312,37 @@ import { scan, bulb, leaf, arrowForward } from 'ionicons/icons';
       transform: translateX(5px);
     }
 
+    .apk-btn {
+      position: relative;
+      background: transparent;
+      color: #fff;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 100px;
+      height: 60px;
+      width: 100%;
+      font-size: 16px;
+      font-weight: 600;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      text-decoration: none;
+      margin-top: 16px;
+      transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+    .apk-btn:hover {
+      background: rgba(255, 255, 255, 0.05);
+      border-color: rgba(255, 255, 255, 0.4);
+    }
+    .apk-btn:active {
+      transform: scale(0.96);
+    }
+    .apk-btn ion-icon {
+      font-size: 24px;
+      color: var(--tertiary-color);
+    }
+
     .sub-cta {
       font-size: 12px;
       color: #71717a;
@@ -323,7 +358,8 @@ export class LandingComponent implements OnInit {
       scan,
       bulb,
       leaf,
-      'arrow-forward': arrowForward
+      'arrow-forward': arrowForward,
+      'logo-android': logoAndroid
     });
   }
 
