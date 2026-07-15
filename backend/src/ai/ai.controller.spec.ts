@@ -18,6 +18,7 @@ describe('AiController', () => {
           useValue: {
             parseMealText: jest.fn(),
             getCoachAdvice: jest.fn(),
+            analyzeImage: jest.fn(),
           },
         },
         {
@@ -109,4 +110,40 @@ describe('AiController', () => {
       await expect(controller.getCoachAdvice(req, {} as any)).rejects.toThrow(HttpException);
     });
   });
+
+  describe('analyzeImage', () => {
+    it('should call analyzeImage with image and mealType', async () => {
+      const mockFoods = [
+        { name: 'Arroz', portion: '1 taza', calories: 206, protein: 4, carbs: 45, fat: 0, icon: 'restaurant' },
+      ];
+
+      jest.spyOn(service, 'analyzeImage').mockResolvedValue(mockFoods);
+
+      const body = { image: 'base64data...', mealType: 'Comida' };
+      const result = await controller.analyzeImage(req, body);
+
+      expect(result).toEqual(mockFoods);
+      expect(rateLimit.assertAllowed).toHaveBeenCalledWith(req.user.id);
+      expect(service.analyzeImage).toHaveBeenCalledWith('base64data...', 'Comida');
+    });
+
+    it('should work without mealType', async () => {
+      jest.spyOn(service, 'analyzeImage').mockResolvedValue([]);
+
+      const body = { image: 'base64data...' };
+      const result = await controller.analyzeImage(req, body);
+
+      expect(result).toEqual([]);
+      expect(service.analyzeImage).toHaveBeenCalledWith('base64data...', undefined);
+    });
+
+    it('should handle service errors', async () => {
+      jest
+        .spyOn(service, 'analyzeImage')
+        .mockRejectedValue(new BadRequestException('MISSING_API_KEY'));
+
+      await expect(controller.analyzeImage(req, { image: 'x' })).rejects.toThrow(BadRequestException);
+    });
+  });
 });
+

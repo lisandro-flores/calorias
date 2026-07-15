@@ -52,4 +52,20 @@ export class AiService {
       })
     );
   }
+
+  analyzeImage(base64Image: string, mealType?: string): Observable<AiFoodItem[]> {
+    return this.http.post<AiFoodItem[]>(`${this.baseUrl}/analyze-image`, { image: base64Image, mealType }).pipe(
+      retry({
+        count: 2,
+        delay: (error: HttpErrorResponse, retryCount: number) => {
+          if (error.status === 429 || error.status === 0 || error.status >= 500) {
+            const delayMs = Math.pow(2, retryCount) * 1000 + Math.random() * 1000;
+            return timer(delayMs);
+          }
+          return throwError(() => error);
+        }
+      })
+    );
+  }
 }
+

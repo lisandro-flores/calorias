@@ -1,4 +1,4 @@
-import { IsArray, IsObject, IsString, MaxLength, MinLength } from 'class-validator';
+import { IsArray, IsObject, IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
 
 export class ParseMealDto {
   @IsString()
@@ -13,4 +13,14 @@ export class CoachAdviceDto {
 
   @IsArray()
   meals: unknown[];
+}
+
+export class AnalyzeImageDto {
+  @IsString()
+  @MinLength(100) // base64 image will always be long
+  image: string;
+
+  @IsOptional()
+  @IsString()
+  mealType?: string;
 }

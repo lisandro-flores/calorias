@@ -198,4 +198,109 @@ describe('AiService', () => {
       await expect(service.getCoachAdvice(profile, meals)).rejects.toThrow(HttpException);
     });
   });
+
+  describe('analyzeImage', () => {
+    it('should throw BadRequestException when API key is missing', async () => {
+      await expect(service.analyzeImage('base64imagedata...')).rejects.toThrow(
+        BadRequestException,
+      );
+    });
+
+    it('should throw BadRequestException when image is too short', async () => {
+      service['ai'] = mockGoogleGenAI;
+      await expect(service.analyzeImage('short')).rejects.toThrow(BadRequestException);
+    });
+
+    it('should throw BadRequestException when image is empty', async () => {
+      service['ai'] = mockGoogleGenAI;
+      await expect(service.analyzeImage('')).rejects.toThrow(BadRequestException);
+    });
+
+    it('should successfully analyze an image', async () => {
+      const mockFoods: ParsedFoodItem[] = [
+        {
+          name: 'Arroz blanco',
+          portion: '1 taza',
+          calories: 206,
+          protein: 4,
+          carbs: 45,
+          fat: 0,
+          icon: 'restaurant',
+        },
+        {
+          name: 'Pollo asado',
+          portion: '150g',
+          calories: 250,
+          protein: 35,
+          carbs: 0,
+          fat: 12,
+          icon: 'restaurant',
+        },
+      ];
+
+      mockGoogleGenAI.models.generateContent.mockResolvedValue({
+        text: JSON.stringify(mockFoods),
+      });
+
+      service['ai'] = mockGoogleGenAI;
+
+      const fakeBase64 = 'a'.repeat(200);
+      const result = await service.analyzeImage(fakeBase64);
+
+      expect(result).toEqual(mockFoods);
+      expect(result.length).toBe(2);
+      expect(result[0].name).toBe('Arroz blanco');
+    });
+
+    it('should strip data URI prefix from base64', async () => {
+      mockGoogleGenAI.models.generateContent.mockResolvedValue({
+        text: '[]',
+      });
+
+      service['ai'] = mockGoogleGenAI;
+
+      const dataUri = 'data:image/jpeg;base64,' + 'a'.repeat(200);
+      await service.analyzeImage(dataUri);
+
+      const callArgs = mockGoogleGenAI.models.generateContent.mock.calls[0][0];
+      const inlineData = callArgs.contents[0].parts[0].inlineData;
+      expect(inlineData.data).not.toContain('data:image');
+    });
+
+    it('should include mealType context when provided', async () => {
+      mockGoogleGenAI.models.generateContent.mockResolvedValue({
+        text: '[]',
+      });
+
+      service['ai'] = mockGoogleGenAI;
+
+      const fakeBase64 = 'a'.repeat(200);
+      await service.analyzeImage(fakeBase64, 'Desayuno');
+
+      const callArgs = mockGoogleGenAI.models.generateContent.mock.calls[0][0];
+      const textPart = callArgs.contents[0].parts[1].text;
+      expect(textPart).toContain('Desayuno');
+    });
+
+    it('should handle rate limit errors', async () => {
+      const rateLimitError = new Error('Quota exceeded');
+      (rateLimitError as any).status = 429;
+
+      mockGoogleGenAI.models.generateContent.mockRejectedValue(rateLimitError);
+      service['ai'] = mockGoogleGenAI;
+
+      const fakeBase64 = 'a'.repeat(200);
+      await expect(service.analyzeImage(fakeBase64)).rejects.toThrow(HttpException);
+    });
+
+    it('should handle invalid JSON response', async () => {
+      mockGoogleGenAI.models.generateContent.mockResolvedValue({
+        text: 'Not valid JSON { ]',
+      });
+      service['ai'] = mockGoogleGenAI;
+
+      const fakeBase64 = 'a'.repeat(200);
+      await expect(service.analyzeImage(fakeBase64)).rejects.toThrow(BadRequestException);
+    });
+  });
 });

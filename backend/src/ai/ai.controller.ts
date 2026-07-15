@@ -3,7 +3,7 @@ import { AiService } from './ai.service';
 import { AiRateLimitService } from './ai-rate-limit.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import type { AuthenticatedRequest } from '../auth/jwt-auth.guard';
-import { CoachAdviceDto, ParseMealDto } from './dto/ai.dto';
+import { AnalyzeImageDto, CoachAdviceDto, ParseMealDto } from './dto/ai.dto';
 
 @Controller('ai')
 @UseGuards(JwtAuthGuard)
@@ -29,4 +29,14 @@ export class AiController {
       advice: await this.aiService.getCoachAdvice(body.profile, body.meals)
     };
   }
+
+  @Post('analyze-image')
+  async analyzeImage(
+    @Req() req: AuthenticatedRequest,
+    @Body() body: AnalyzeImageDto,
+  ) {
+    this.rateLimit.assertAllowed(req.user.id);
+    return this.aiService.analyzeImage(body.image, body.mealType);
+  }
 }
+
