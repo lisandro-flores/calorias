@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { IonicModule, ToastController } from '@ionic/angular';
@@ -12,15 +12,7 @@ import { NutritionStateService } from '../services/nutrition-state.service';
   imports: [CommonModule, FormsModule, IonicModule],
   template: `
     <div class="ai-wrapper">
-      <!-- Collapsed trigger -->
-      <button class="ai-trigger" (click)="toggle()" [class.active]="isOpen()">
-        <ion-icon class="ai-icon" name="sparkles"></ion-icon>
-        <span class="ai-label">Registrar con IA</span>
-        <ion-icon [name]="isOpen() ? 'chevron-up' : 'chevron-down'" class="ai-chevron"></ion-icon>
-      </button>
-
-      <!-- Expanded panel -->
-      <div class="ai-panel" *ngIf="isOpen()">
+      <div class="ai-panel">
         <div class="ai-hint">Describe lo que comiste en lenguaje natural</div>
         <div class="ai-tip">Enter analiza • Shift+Enter añade una nueva línea</div>
 
@@ -106,47 +98,11 @@ import { NutritionStateService } from '../services/nutrition-state.service';
       margin-bottom: 16px;
     }
 
-    /* Trigger button */
-    .ai-trigger {
-      width: 100%;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      background: var(--app-surface);
-      border: 1px solid var(--app-border);
-      border-radius: 14px;
-      padding: 12px 16px;
-      cursor: pointer;
-      font-family: inherit;
-      transition: all 0.2s;
-    }
-    .ai-trigger.active {
-      border-bottom-left-radius: 0;
-      border-bottom-right-radius: 0;
-      border-bottom-color: transparent;
-    }
-    .ai-icon {
-      font-size: 18px;
-    }
-    .ai-label {
-      flex: 1;
-      font-size: 14px;
-      font-weight: 500;
-      color: var(--app-text);
-      text-align: left;
-    }
-    .ai-chevron {
-      color: var(--app-muted);
-      font-size: 16px;
-    }
-
     /* Expanded panel */
     .ai-panel {
       background: var(--app-surface);
-      border: 1px solid var(--app-border);
-      border-top: none;
-      border-radius: 0 0 14px 14px;
-      padding: 14px 16px 16px;
+      border: none;
+      padding: 0;
     }
 
     .ai-hint {
@@ -455,8 +411,8 @@ export class AiInputComponent {
   private aiService = inject(AiService);
   nutritionState = inject(NutritionStateService);
   private toastCtrl = inject(ToastController);
+  @Output() foodAdded = new EventEmitter<void>();
 
-  isOpen = signal(false);
   isLoading = signal(false);
   results = signal<AiFoodItem[]>([]);
   errorMsg = signal<string>('');
@@ -471,13 +427,6 @@ export class AiInputComponent {
     'avena con plátano y miel',
     'torta de jamón con refresco',
   ];
-
-  toggle() {
-    this.isOpen.update(v => !v);
-    if (!this.isOpen()) {
-      this.clearResults();
-    }
-  }
 
   useExample(text: string) {
     this.userText = text;
@@ -555,6 +504,7 @@ export class AiInputComponent {
       // Fire-and-forget toast; do not block UI
       this.showSuccessToast(foods.length, mealName).catch(() => {});
       try { await Haptics.impact({ style: ImpactStyle.Light }); } catch (e) {}
+      this.foodAdded.emit();
     } catch (err) {
       console.error('Error adding foods to meal', err);
       this.errorMsg.set('No se pudieron agregar los alimentos. Intenta de nuevo.');

@@ -24,6 +24,14 @@ export class HealthConnectService {
     syncedAt: null,
   });
 
+  protected get platform(): string {
+    return Capacitor.getPlatform();
+  }
+
+  protected get healthPlugin(): typeof Health {
+    return Health;
+  }
+
   hasData = computed(() => {
     const s = this.todaySummary();
     return s.steps > 0 || s.caloriesBurned > 0 || s.weight !== null;
@@ -54,13 +62,13 @@ export class HealthConnectService {
   }
 
   async checkAvailability(): Promise<boolean> {
-    if (Capacitor.getPlatform() !== 'android') {
+    if (this.platform !== 'android') {
       this.isAvailable.set(false);
       return false;
     }
 
     try {
-      const result = await Health.isAvailable();
+      const result = await this.healthPlugin.isAvailable();
       this.isAvailable.set(Boolean(result.available));
       return Boolean(result.available);
     } catch (err) {
@@ -72,7 +80,7 @@ export class HealthConnectService {
 
   async checkAuthorization(): Promise<boolean> {
     try {
-      const status = await Health.checkAuthorization({ read: [...READ_TYPES] as any });
+      const status = await this.healthPlugin.checkAuthorization({ read: [...READ_TYPES] as any });
       const granted = status.readDenied.length === 0;
       this.isAuthorized.set(granted);
       return granted;
@@ -87,7 +95,7 @@ export class HealthConnectService {
 
     try {
       this.isBusy.set(true);
-      await Health.requestAuthorization({ read: [...READ_TYPES] as any });
+      await this.healthPlugin.requestAuthorization({ read: [...READ_TYPES] as any });
       const granted = await this.checkAuthorization();
       if (granted) {
         await this.refreshToday();
@@ -134,7 +142,7 @@ export class HealthConnectService {
 
   async openPrivacyPolicy(): Promise<void> {
     try {
-      await Health.showPrivacyPolicy();
+      await this.healthPlugin.showPrivacyPolicy();
     } catch {
       // No-op
     }
@@ -142,7 +150,7 @@ export class HealthConnectService {
 
   async openSettings(): Promise<void> {
     try {
-      await Health.openHealthConnectSettings();
+      await this.healthPlugin.openHealthConnectSettings();
     } catch {
       // No-op
     }
@@ -153,7 +161,7 @@ export class HealthConnectService {
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-      const result = await Health.readSamples({
+      const result = await this.healthPlugin.readSamples({
         dataType: 'weight',
         startDate: thirtyDaysAgo.toISOString(),
         endDate: new Date().toISOString(),
@@ -173,7 +181,7 @@ export class HealthConnectService {
 
   private async readSteps(start: Date, end: Date): Promise<number> {
     try {
-      const result = await Health.readSamples({
+      const result = await this.healthPlugin.readSamples({
         dataType: 'steps',
         startDate: start.toISOString(),
         endDate: end.toISOString(),
@@ -190,7 +198,7 @@ export class HealthConnectService {
 
   private async readCaloriesBurned(start: Date, end: Date): Promise<number> {
     try {
-      const result = await Health.readSamples({
+      const result = await this.healthPlugin.readSamples({
         dataType: 'totalCalories',
         startDate: start.toISOString(),
         endDate: end.toISOString(),

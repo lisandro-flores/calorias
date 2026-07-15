@@ -1,19 +1,17 @@
 import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { IonicModule } from '@ionic/angular';
+import { IonicModule, ModalController } from '@ionic/angular';
 import { NutritionStateService } from '../services/nutrition-state.service';
 import { HeroSummaryComponent } from './hero-summary.component';
 import { MealBlockComponent } from './meal-block.component';
-import { RecentFoodsComponent } from './recent-foods.component';
+import { AddFoodModalComponent } from './add-food-modal.component';
+import { ActivityCardComponent } from './activity-card.component';
 import { WaterTrackerComponent } from './water-tracker.component';
 import { GoalProgressComponent } from './goal-progress.component';
-import { FoodSearchComponent } from './food-search.component';
-import { AiInputComponent } from './ai-input.component';
-import { ActivityCardComponent } from './activity-card.component';
 import { HealthConnectService } from '../services/health-connect.service';
 import { OutboxService } from '../services/outbox.service';
 import { addIcons } from 'ionicons';
-import { alertCircleOutline, cloudDoneOutline, cloudOfflineOutline, syncOutline, timeOutline } from 'ionicons/icons';
+import { alertCircleOutline, cloudDoneOutline, cloudOfflineOutline, syncOutline, timeOutline, addOutline } from 'ionicons/icons';
 
 @Component({
   selector: 'app-dashboard',
@@ -23,11 +21,8 @@ import { alertCircleOutline, cloudDoneOutline, cloudOfflineOutline, syncOutline,
     IonicModule,
     HeroSummaryComponent,
     MealBlockComponent,
-    RecentFoodsComponent,
     WaterTrackerComponent,
     GoalProgressComponent,
-    FoodSearchComponent,
-    AiInputComponent,
     ActivityCardComponent
   ],
   template: `
@@ -84,19 +79,6 @@ import { alertCircleOutline, cloudDoneOutline, cloudOfflineOutline, syncOutline,
         </section>
 
         <section class="section-block">
-          <div class="section-label">Captura rápida</div>
-          <div class="quick-capture-row">
-            <app-ai-input></app-ai-input>
-            <button class="show-search-btn" (click)="showSearch = !showSearch">
-              <ion-icon name="search-outline"></ion-icon>
-              <span>{{ showSearch ? 'Ocultar búsqueda' : 'Buscar producto' }}</span>
-            </button>
-          </div>
-          <app-food-search *ngIf="showSearch"></app-food-search>
-          <app-recent-foods></app-recent-foods>
-        </section>
-
-        <section class="section-block">
           <div class="section-label">Comidas del día</div>
           <app-meal-block
             *ngFor="let meal of state.meals(); trackBy: trackByMeal"
@@ -115,6 +97,13 @@ import { alertCircleOutline, cloudDoneOutline, cloudOfflineOutline, syncOutline,
 
         <div class="footer-space"></div>
       </div>
+
+      <!-- FAB for Add Food -->
+      <ion-fab vertical="bottom" horizontal="end" slot="fixed" *ngIf="state.dataReady()">
+        <ion-fab-button (click)="openAddFoodModal()">
+          <ion-icon name="add-outline"></ion-icon>
+        </ion-fab-button>
+      </ion-fab>
     </ion-content>
   `,
   styles: [`
@@ -304,9 +293,6 @@ import { alertCircleOutline, cloudDoneOutline, cloudOfflineOutline, syncOutline,
 
     app-hero-summary,
     app-activity-card,
-    app-ai-input,
-    app-food-search,
-    app-recent-foods,
     app-water-tracker,
     app-goal-progress {
       display: block;
@@ -322,8 +308,8 @@ export class DashboardComponent {
   state = inject(NutritionStateService);
   health = inject(HealthConnectService);
   private outbox = inject(OutboxService);
+  private modalCtrl = inject(ModalController);
   pendingCount$ = this.outbox.pending$;
-  showSearch = false;
 
   constructor() {
     addIcons({
@@ -332,6 +318,7 @@ export class DashboardComponent {
       'cloud-offline-outline': cloudOfflineOutline,
       'sync-outline': syncOutline,
       'time-outline': timeOutline,
+      'add-outline': addOutline
     });
   }
 
@@ -383,5 +370,14 @@ export class DashboardComponent {
       return 'Tus datos siguen en este dispositivo. Puedes reintentar.';
     }
     return 'Tus datos están confirmados en la nube.';
+  }
+
+  async openAddFoodModal() {
+    const modal = await this.modalCtrl.create({
+      component: AddFoodModalComponent,
+      breakpoints: [0, 0.5, 0.75, 1],
+      initialBreakpoint: 0.75,
+    });
+    await modal.present();
   }
 }

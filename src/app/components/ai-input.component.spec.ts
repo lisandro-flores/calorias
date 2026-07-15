@@ -158,16 +158,6 @@ describe('AiInputComponent (I-06 a I-12)', () => {
     expect(component['isMissingApiKey']()).toBe(false);
   });
 
-  // ─────────────────────────────────────────────────────────
-  // Extra: toggle abre y cierra el panel
-  // ─────────────────────────────────────────────────────────
-  it('toggle() alterna el estado isOpen', () => {
-    expect(component.isOpen()).toBe(false);
-    component.toggle();
-    expect(component.isOpen()).toBe(true);
-    component.toggle();
-    expect(component.isOpen()).toBe(false);
-  });
 
   it('cancelMealPicker() cierra el picker y limpia pendingFoods', () => {
     component.mealPickerOpen.set(true);

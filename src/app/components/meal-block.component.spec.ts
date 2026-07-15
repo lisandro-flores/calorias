@@ -135,4 +135,101 @@ describe('MealBlockComponent', () => {
       expect(component.copyYesterday.emit).toHaveBeenCalled();
     });
   });
+
+  describe('Alerts and handlers', () => {
+    it('should call confirmRemoveFood on onRemoveFood', () => {
+      spyOn(component, 'confirmRemoveFood').and.returnValue(Promise.resolve());
+      component.onRemoveFood('123');
+      expect(component.confirmRemoveFood).toHaveBeenCalledWith('123');
+    });
+
+    it('should call state.removeFoodFromMeal when confirming removal', async () => {
+      const alertCtrl = TestBed.inject(AlertController);
+      spyOn(alertCtrl, 'create').and.callFake(async (opts:any) => {
+        return {
+          present: async () => {
+            const btn = (opts.buttons || []).find((b:any) => b.text === 'Eliminar');
+            if (btn && typeof btn.handler === 'function') {
+              btn.handler();
+            }
+          }
+        } as any;
+      });
+
+      await component.confirmRemoveFood('123');
+      expect(nutritionState.removeFoodFromMeal).toHaveBeenCalledWith('Comida', '123');
+    });
+
+    it('should handle onQuickAdd valid submit', async () => {
+      const alertCtrl = TestBed.inject(AlertController);
+      spyOn(alertCtrl, 'create').and.callFake(async (opts:any) => {
+        return {
+          present: async () => {
+            const btn = (opts.buttons || []).find((b:any) => b.text === 'Agregar');
+            if (btn && typeof btn.handler === 'function') {
+              btn.handler({ name: 'Manzana', calories: '100', protein: '1' });
+            }
+          }
+        } as any;
+      });
+
+      await component.onQuickAdd();
+      expect(nutritionState.quickAdd).toHaveBeenCalledWith('Comida', 'Manzana', 100, 1);
+    });
+
+    it('should handle onQuickAdd invalid submit', async () => {
+      const alertCtrl = TestBed.inject(AlertController);
+      spyOn(alertCtrl, 'create').and.callFake(async (opts:any) => {
+        return {
+          present: async () => {
+            const btn = (opts.buttons || []).find((b:any) => b.text === 'Agregar');
+            if (btn && typeof btn.handler === 'function') {
+              const res = btn.handler({ name: '', calories: '', protein: '' });
+              expect(res).toBeFalse();
+            }
+          }
+        } as any;
+      });
+
+      await component.onQuickAdd();
+      expect(nutritionState.quickAdd).not.toHaveBeenCalled();
+    });
+
+    it('should handle onEditFood valid submit', async () => {
+      const alertCtrl = TestBed.inject(AlertController);
+      spyOn(alertCtrl, 'create').and.callFake(async (opts:any) => {
+        return {
+          present: async () => {
+            const btn = (opts.buttons || []).find((b:any) => b.text === 'Guardar');
+            if (btn && typeof btn.handler === 'function') {
+              btn.handler({ name: 'Manzana Edit', portion: '1 ud', calories: '120', protein: '2', carbs: '30', fat: '0' });
+            }
+          }
+        } as any;
+      });
+
+      await component.onEditFood({ id: 'f1', name: 'Manzana', calories: 100 } as any);
+      expect(nutritionState.updateFoodInMeal).toHaveBeenCalledWith('Comida', 'f1', jasmine.objectContaining({
+        name: 'Manzana Edit', portion: '1 ud', calories: 120, protein: 2, carbs: 30, fat: 0
+      }));
+    });
+
+    it('should handle onEditFood invalid submit', async () => {
+      const alertCtrl = TestBed.inject(AlertController);
+      spyOn(alertCtrl, 'create').and.callFake(async (opts:any) => {
+        return {
+          present: async () => {
+            const btn = (opts.buttons || []).find((b:any) => b.text === 'Guardar');
+            if (btn && typeof btn.handler === 'function') {
+              const res = btn.handler({ name: '', portion: '', calories: '' });
+              expect(res).toBeFalse();
+            }
+          }
+        } as any;
+      });
+
+      await component.onEditFood({ id: 'f1', name: 'Manzana', calories: 100 } as any);
+      expect(nutritionState.updateFoodInMeal).not.toHaveBeenCalled();
+    });
+  });
 });

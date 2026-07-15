@@ -29,16 +29,18 @@ test.describe('Registro con IA (E2E-03)', () => {
     await waitForDashboard(page);
   });
 
-  test('el botón "Registrar con IA" abre el panel', async ({ page }) => {
-    const aiBtn = page.getByRole('button', { name: /registrar con ia/i });
-    await expect(aiBtn).toBeVisible();
-    await aiBtn.click();
+  test('el botón flotante abre el modal de IA', async ({ page }) => {
+    const fabBtn = page.locator('ion-fab-button');
+    await expect(fabBtn).toBeVisible();
+    await fabBtn.click();
 
-    await expect(page.locator('.ai-panel')).toBeVisible();
+    // The modal defaults to AI segment
+    const textarea = page.locator('textarea.ai-textarea');
+    await expect(textarea).toBeVisible();
   });
 
   test('se puede escribir texto en el textarea del panel IA', async ({ page }) => {
-    await page.getByRole('button', { name: /registrar con ia/i }).click();
+    await page.locator('ion-fab-button').click();
 
     const textarea = page.locator('textarea.ai-textarea');
     await expect(textarea).toBeVisible();
@@ -48,7 +50,7 @@ test.describe('Registro con IA (E2E-03)', () => {
   });
 
   test('click en example chip rellena el textarea', async ({ page }) => {
-    await page.getByRole('button', { name: /registrar con ia/i }).click();
+    await page.locator('ion-fab-button').click();
 
     const chip = page.locator('.example-chip').first();
     await chip.click();
@@ -59,7 +61,7 @@ test.describe('Registro con IA (E2E-03)', () => {
   });
 
   test('flujo completo: analizar → agregar todos → seleccionar comida', async ({ page }) => {
-    await page.getByRole('button', { name: /registrar con ia/i }).click();
+    await page.locator('ion-fab-button').click();
 
     const textarea = page.locator('textarea.ai-textarea');
     await textarea.fill('arroz con pollo');
@@ -84,7 +86,7 @@ test.describe('Registro con IA (E2E-03)', () => {
   });
 
   test('el botón Descartar cierra los resultados', async ({ page }) => {
-    await page.getByRole('button', { name: /registrar con ia/i }).click();
+    await page.locator('ion-fab-button').click();
 
     const textarea = page.locator('textarea.ai-textarea');
     await textarea.fill('avena con leche');

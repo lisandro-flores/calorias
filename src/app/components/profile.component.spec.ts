@@ -21,6 +21,7 @@ class MockNutritionState {
   calorieGoal() { return this.profile.calorieGoalOverride ?? this.tdee(); }
   goals() { return { calorieGoal: this.calorieGoal(), proteinGoal: this.profile.proteinGoalOverride ?? 144, carbGoal: 200, fatGoal: 70, waterGoal: this.profile.waterGoal, startWeight: this.profile.startWeight, currentWeight: this.profile.currentWeight, goalWeight: this.profile.goalWeight }; }
   proteinGoal() { return 144; }
+  resetToday = jasmine.createSpy('resetToday');
 }
 
 class MockHealthConnect {
@@ -28,14 +29,15 @@ class MockHealthConnect {
   isAvailable() { return true; }
   isAuthorized() { return true; }
   todaySummary() { return { weight: 75.4, steps: 1000, caloriesBurned: 200 }; }
-  refreshToday() { return Promise.resolve(); }
-  connect() { return Promise.resolve(); }
+  refreshToday = jasmine.createSpy('refreshToday').and.returnValue(Promise.resolve());
+  connect = jasmine.createSpy('connect').and.returnValue(Promise.resolve());
   weightLabel() { return '75.4 kg'; }
   statusLabel() { return 'Conectado'; }
 }
 
 class MockAuth {
   currentUser() { return { name: 'Usuario', email: 'u@example.com' }; }
+  logout = jasmine.createSpy('logout');
 }
 
 describe('ProfileComponent', () => {
@@ -103,5 +105,78 @@ describe('ProfileComponent', () => {
 
     // After import, service should be updated
     expect(ns.userProfile().currentWeight).toBeCloseTo(75.4, 1);
+  });
+
+  it('should set gender and mark dirty', () => {
+    component.setGender('female');
+    expect(component.draft.gender).toBe('female');
+    expect(component.hasDraftChanges()).toBeTrue();
+  });
+
+  it('should reset calorie goal auto', () => {
+    component.draft.calorieGoalOverride = 2000;
+    component.resetCalAuto();
+    expect(component.draft.calorieGoalOverride).toBeNull();
+    expect(component.hasDraftChanges()).toBeTrue();
+  });
+
+  it('should connect health', async () => {
+    await component.connectHealth();
+    expect(hc.connect).toHaveBeenCalled();
+  });
+
+  it('should refresh health', async () => {
+    await component.refreshHealth();
+    expect(hc.refreshToday).toHaveBeenCalled();
+  });
+
+  it('should call resetToday on state and show alert', async () => {
+    const alertCtrl = TestBed.inject(AlertController);
+    spyOn(alertCtrl, 'create').and.callFake(async (opts:any) => {
+      return {
+        present: async () => {
+          const btn = (opts.buttons || []).find((b:any) => b.text === 'Reiniciar');
+          if (btn && typeof btn.handler === 'function') {
+            btn.handler();
+          }
+        }
+      } as any;
+    });
+
+    await component.resetToday();
+    expect(ns.resetToday).toHaveBeenCalled();
+  });
+
+  it('should show alert on confirmSave', async () => {
+    const alertCtrl = TestBed.inject(AlertController);
+    spyOn(alertCtrl, 'create').and.callFake(async (opts:any) => {
+      return {
+        present: async () => {
+          const btn = (opts.buttons || []).find((b:any) => b.text === 'Guardar');
+          if (btn && typeof btn.handler === 'function') {
+            btn.handler();
+          }
+        }
+      } as any;
+    });
+
+    component.markDirty();
+    await component.confirmSave();
+    
+    // check that save() was called by verifying if dirty flag is cleared
+    expect(component.hasDraftChanges()).toBeFalse();
+  });
+
+  it('should not show alert on confirmSave if no changes', async () => {
+    const alertCtrl = TestBed.inject(AlertController);
+    spyOn(alertCtrl, 'create');
+    await component.confirmSave();
+    expect(alertCtrl.create).not.toHaveBeenCalled();
+  });
+
+  it('should logout', () => {
+    const authService = TestBed.inject(AuthService);
+    component.logout();
+    expect((authService as any).logout).toHaveBeenCalled();
   });
 });

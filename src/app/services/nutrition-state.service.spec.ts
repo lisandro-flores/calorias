@@ -11,6 +11,7 @@ describe('NutritionStateService', () => {
   let httpMock: HttpTestingController;
 
   beforeEach(() => {
+    localStorage.clear();
     TestBed.configureTestingModule({
       providers: [
         NutritionStateService,
@@ -741,7 +742,99 @@ describe('NutritionStateService', () => {
       expect(service.meals()).toBe(beforeMeals);
     });
 
+    it('MD-12e: pullFromMongo error should trigger local fallback if trackHydration is true', () => {
+      spyOn<any>(service as any, 'useLocalFallback').and.stub();
+      spyOn<any>(service as any, 'finishInitialHydrationStep').and.stub();
+
+      authService.currentUser.set({ id: 'user1', email: 'test@example.com', name: 'Test', picture: '', token: '' });
+
+      (service as any).pullFromMongo(true);
+      const reqs = httpMock.match(request => request.url.includes('/entries/day'));
+      if (reqs.length > 0) reqs[0].error(new ErrorEvent('Network error'));
+      httpMock.match(() => true).forEach(req => req.flush({})); // clear all others
+
+      expect((service as any).useLocalFallback).toHaveBeenCalled();
+      expect((service as any).finishInitialHydrationStep).toHaveBeenCalled();
+    });
+
+    it('MD-12f: pullProfileFromMongo error should trigger local fallback if trackHydration is true', () => {
+      spyOn<any>(service as any, 'useLocalFallback').and.stub();
+      spyOn<any>(service as any, 'finishInitialHydrationStep').and.stub();
+
+      authService.currentUser.set({ id: 'user1', email: 'test@example.com', name: 'Test', picture: '', token: '' });
+
+      (service as any).pullProfileFromMongo(true);
+      const reqs = httpMock.match(request => request.url.includes('/auth/profile'));
+      if (reqs.length > 0) reqs[0].error(new ErrorEvent('Network error'));
+      httpMock.match(() => true).forEach(req => req.flush({})); // clear all others
+
+      expect((service as any).useLocalFallback).toHaveBeenCalled();
+      expect((service as any).finishInitialHydrationStep).toHaveBeenCalled();
+    });
+
+    it('MD-12g: pullHistoryFromMongo error should trigger local fallback if trackHydration is true', () => {
+      spyOn<any>(service as any, 'useLocalFallback').and.stub();
+      spyOn<any>(service as any, 'finishInitialHydrationStep').and.stub();
+
+      authService.currentUser.set({ id: 'user1', email: 'test@example.com', name: 'Test', picture: '', token: '' });
+
+      (service as any).pullHistoryFromMongo(true);
+      const reqs = httpMock.match(request => request.url.includes('/entries/range'));
+      if (reqs.length > 0) reqs[0].error(new ErrorEvent('Network error'));
+      httpMock.match(() => true).forEach(req => req.flush({})); // clear all others
+
+      expect((service as any).useLocalFallback).toHaveBeenCalled();
+      expect((service as any).finishInitialHydrationStep).toHaveBeenCalled();
+    });
+
+    it('MD-12h: pullHistoryFromMongo maps response to history signal', (done) => {
+      authService.currentUser.set({ id: 'user1', email: 'test@example.com', name: 'Test', picture: '', token: '' });
+
+      (service as any).pullHistoryFromMongo(false);
+      const reqs = httpMock.match(request => request.url.includes('/entries/range'));
+      if (reqs.length > 0) {
+        reqs[0].flush({
+          success: true,
+          data: [{ date: '2026-05-01', meals: [], waterGlasses: 2 }]
+        });
+      }
+      
+      setTimeout(() => {
+        httpMock.match(() => true).forEach(req => req.flush({})); // clear all others from effects
+        const entry = service.history().find(h => h.date === '2026-05-01');
+        expect(entry).toBeTruthy();
+        expect(entry?.waterGlasses).toBe(2);
+        done();
+      }, 0);
+    });
+
     // --- clientUpdatedAt tracking ---
+
+    it('MD-12i: syncToMongo enqueues outbox task if online', (done) => {
+      authService.currentUser.set({ id: 'user1', email: 'test@example.com', name: 'Test', picture: '', token: '' });
+
+      spyOn((service as any).outbox, 'enqueue').and.stub();
+      
+      (service as any).syncToMongo();
+      
+      setTimeout(() => {
+        expect((service as any).outbox.enqueue).toHaveBeenCalled();
+        expect(service.syncStatus()).toBe('pending');
+        httpMock.match(() => true).forEach(req => req.flush({})); // clear effect requests
+        done();
+      }, 2600); // syncToMongo uses 2500ms timeout
+    });
+
+    it('MD-12j: syncToMongo marks synced immediately if offline_mode', (done) => {
+      authService.currentUser.set({ id: 'offline_mode', email: 'test@example.com', name: 'Test', picture: '', token: '' });
+      
+      (service as any).syncToMongo();
+      expect(service.syncStatus()).toBe('synced');
+      setTimeout(() => {
+        httpMock.match(() => true).forEach(req => req.flush({})); // clear effect requests
+        done();
+      }, 0);
+    });
 
     it('MD-13: markTodayDirty actualiza clientUpdatedAt en localStorage', () => {
       const beforeMark = new Date().toISOString();
