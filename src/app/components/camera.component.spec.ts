@@ -24,6 +24,7 @@ describe('CameraComponent', () => {
   };
 
   beforeEach(async () => {
+    mockState.quickAdd.calls.reset();
     aiService = jasmine.createSpyObj('AiService', ['analyzeImage', 'parseMeal', 'getCoachAdvice']);
     toastCtrl = jasmine.createSpyObj('ToastController', ['create']);
     toastCtrl.create.and.returnValue(Promise.resolve({ present: () => Promise.resolve() } as any));
