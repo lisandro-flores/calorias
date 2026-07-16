@@ -13,6 +13,10 @@ export class CoachAdviceDto {
 
   @IsArray()
   meals: unknown[];
+
+  @IsOptional()
+  @IsArray()
+  weeklyHistory?: unknown[];
 }
 
 export class AnalyzeImageDto {

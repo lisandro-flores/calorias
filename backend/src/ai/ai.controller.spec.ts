@@ -91,15 +91,16 @@ describe('AiController', () => {
       expect(rateLimit.assertAllowed).toHaveBeenCalledWith(req.user.id);
     });
 
-    it('should pass profile and meals to service', async () => {
+    it('should pass profile, meals and weeklyHistory to service', async () => {
       const profile = { weight: 75 };
       const meals = [{ name: 'Test', calories: 100 }];
+      const weeklyHistory = [{ date: '2023-10-01' }];
 
       jest.spyOn(service, 'getCoachAdvice').mockResolvedValue('test advice');
 
-      await controller.getCoachAdvice(req, { profile, meals });
+      await controller.getCoachAdvice(req, { profile, meals, weeklyHistory });
 
-      expect(service.getCoachAdvice).toHaveBeenCalledWith(profile, meals);
+      expect(service.getCoachAdvice).toHaveBeenCalledWith(profile, meals, weeklyHistory);
     });
 
     it('should handle service errors', async () => {

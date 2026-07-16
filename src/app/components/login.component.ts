@@ -30,13 +30,7 @@ declare var google: any;
             (click)="renderGoogleButton()">
             Volver a iniciar sesión
           </button>
-
           <div id="googleSignInBtn" class="google-btn"></div>
-
-          <!-- Skip login button for testing / offline use -->
-          <button class="skip-btn" (click)="skipLogin()">
-            Continuar sin cuenta
-          </button>
         </div>
       </div>
     </ion-content>
@@ -160,20 +154,8 @@ declare var google: any;
     .relogin-btn:active {
       transform: translateY(1px);
     }
-    .skip-btn {
-      background: rgba(255,255,255,0.05);
-      border: 1px solid var(--app-border);
-      border-radius: 20px;
-      padding: 10px 24px;
-      color: var(--app-muted);
-      font-size: 13px;
-      font-family: inherit;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-    .skip-btn:active {
-      background: var(--app-surface);
-      transform: scale(0.96);
+    .relogin-btn:active {
+      transform: translateY(1px);
     }
   `]
 })
@@ -214,16 +196,5 @@ export class LoginComponent implements OnInit {
       this.router.navigate(['/tabs/dashboard']);
     }
   }
-
-  skipLogin() {
-    // Create an offline user so the guard lets us through
-    this.authService.currentUser.set({
-      id: 'offline_mode',
-      email: '',
-      name: 'Usuario',
-      picture: '',
-      token: '',
-    });
-    this.router.navigate(['/tabs/dashboard']);
   }
 }

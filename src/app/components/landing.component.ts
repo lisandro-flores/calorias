@@ -3,14 +3,15 @@ import { CommonModule } from '@angular/common';
 import { IonContent, IonIcon } from '@ionic/angular/standalone';
 import { Router } from '@angular/router';
 import { addIcons } from 'ionicons';
-import { scan, bulb, leaf, arrowForward, logoAndroid } from 'ionicons/icons';
+import { scan, bulb, leaf, arrowForward, logoAndroid, flame, restaurant, fitness, arrowUp, statsChart, sparkles } from 'ionicons/icons';
+import { AuthService } from '../services/auth.service';
 
 @Component({
   selector: 'app-landing',
   standalone: true,
   imports: [CommonModule, IonContent, IonIcon],
   template: `
-    <ion-content scroll-y="false">
+    <ion-content scroll-y="true">
       <div class="landing-container">
         <!-- Advanced Ambient Background -->
         <div class="ambient-light light-1"></div>
@@ -22,21 +23,59 @@ import { scan, bulb, leaf, arrowForward, logoAndroid } from 'ionicons/icons';
 
         <!-- Main Content -->
         <div class="content-wrapper">
-          <div class="hero-brand" style="--delay: 0.2s">
-            <div class="brand-icon-wrapper">
-              <div class="brand-icon-glow"></div>
-              <ion-icon class="brand-icon" name="flame"></ion-icon>
+          <div class="hero-brand" style="--delay: 0.1s">
+            <div class="brand-badge">
+              <ion-icon name="sparkles"></ion-icon>
+              <span>IA de Nutrición v2.0</span>
             </div>
             <h1 class="title">Fuel<span>Smart</span></h1>
-            <p class="tagline">La IA que transforma tu nutrición.</p>
+            <p class="tagline">Toma una foto, descubre tus macros. La forma más inteligente de comer bien.</p>
+          </div>
+
+          <!-- Dynamic Floating UI Showcase -->
+          <div class="showcase-container" style="--delay: 0.3s">
+            <div class="glass-mockup main-mockup">
+              <div class="mockup-header">
+                <ion-icon name="scan"></ion-icon>
+                <span>Analizando...</span>
+              </div>
+              <div class="mockup-img"></div>
+              <div class="mockup-results">
+                <div class="result-row">
+                  <span>Ensalada César</span>
+                  <strong>320 kcal</strong>
+                </div>
+                <div class="macro-bars">
+                  <div class="macro-bar p" style="width: 40%"></div>
+                  <div class="macro-bar c" style="width: 20%"></div>
+                  <div class="macro-bar f" style="width: 35%"></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="glass-mockup floating-mockup top-right">
+              <ion-icon name="restaurant" class="accent-icon"></ion-icon>
+              <div>
+                <strong>+25g</strong>
+                <span>Proteína</span>
+              </div>
+            </div>
+
+            <div class="glass-mockup floating-mockup bottom-left">
+              <ion-icon name="bulb" class="accent-icon"></ion-icon>
+              <div>
+                <strong>Coach</strong>
+                <span>Buen progreso hoy</span>
+              </div>
+            </div>
           </div>
 
           <div class="feature-cards">
-            <div class="feature-card" style="--delay: 0.4s">
+            <div class="feature-card" style="--delay: 0.5s">
               <div class="icon-box blue"><ion-icon name="scan"></ion-icon></div>
               <div class="text-box">
-                <h3>Cero Estrés</h3>
-                <p>Escribe tu comida y la IA calcula tus macros al instante.</p>
+                <h3>Visión Artificial</h3>
+                <p>Usa tu cámara y deja que la IA identifique y calcule todo.</p>
               </div>
             </div>
 
@@ -44,29 +83,21 @@ import { scan, bulb, leaf, arrowForward, logoAndroid } from 'ionicons/icons';
               <div class="icon-box pink"><ion-icon name="bulb"></ion-icon></div>
               <div class="text-box">
                 <h3>Coach Activo</h3>
-                <p>Consejos personalizados basados en tu progreso diario.</p>
-              </div>
-            </div>
-            
-            <div class="feature-card" style="--delay: 0.8s">
-              <div class="icon-box green"><ion-icon name="leaf"></ion-icon></div>
-              <div class="text-box">
-                <h3>Minimalista</h3>
-                <p>Diseño enfocado en lo que importa, sin distracciones.</p>
+                <p>Aprende de tu historial y recibe consejos proactivos.</p>
               </div>
             </div>
           </div>
 
-          <div class="cta-section" style="--delay: 1s">
+          <div class="cta-section" style="--delay: 0.8s">
             <button class="start-btn" (click)="goToLogin()">
-              <span class="btn-text">Comenzar mi viaje</span>
+              <span class="btn-text">Iniciar Sesión</span>
               <ion-icon name="arrow-forward"></ion-icon>
             </button>
             <a href="https://github.com/lisandro-flores/calorias/releases/download/latest/fuelsmart.apk" class="apk-btn">
               <ion-icon name="logo-android"></ion-icon>
               <span class="btn-text">Descargar APK (Android)</span>
             </a>
-            <p class="sub-cta">Sincronización en la nube incluida</p>
+            <p class="sub-cta">Requiere cuenta de Google para sincronización segura en la nube.</p>
           </div>
         </div>
       </div>
@@ -85,13 +116,12 @@ import { scan, bulb, leaf, arrowForward, logoAndroid } from 'ionicons/icons';
 
     .landing-container {
       position: relative;
-      height: 100%;
+      min-height: 100%;
       width: 100%;
       display: flex;
       flex-direction: column;
-      justify-content: center;
       align-items: center;
-      overflow: hidden;
+      overflow-x: hidden;
       padding: 0 24px;
     }
 
@@ -105,18 +135,18 @@ import { scan, bulb, leaf, arrowForward, logoAndroid } from 'ionicons/icons';
       animation: drift 15s infinite alternate ease-in-out;
     }
     .light-1 {
-      top: -15%; right: -10%; width: 400px; height: 400px;
+      top: -5%; right: -10%; width: 400px; height: 400px;
       background: rgba(0, 153, 255, 0.4);
       animation-delay: 0s;
     }
     .light-2 {
-      bottom: -15%; left: -10%; width: 500px; height: 500px;
+      bottom: 20%; left: -10%; width: 500px; height: 500px;
       background: rgba(255, 64, 129, 0.3);
       animation-delay: -5s;
     }
     .light-3 {
       top: 40%; left: 50%; width: 300px; height: 300px;
-      background: rgba(0, 230, 118, 0.15);
+      background: rgba(255, 193, 7, 0.2);
       transform: translateX(-50%);
       animation-delay: -10s;
     }
@@ -144,13 +174,11 @@ import { scan, bulb, leaf, arrowForward, logoAndroid } from 'ionicons/icons';
       max-width: 480px;
       display: flex;
       flex-direction: column;
-      height: 100%;
-      justify-content: space-evenly;
-      padding: 40px 0;
+      padding: 60px 0 40px;
     }
 
     /* Animation Utilities */
-    .hero-brand, .feature-card, .cta-section {
+    .hero-brand, .showcase-container, .feature-card, .cta-section {
       opacity: 0;
       animation: fadeUp 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
       animation-delay: var(--delay);
@@ -164,54 +192,147 @@ import { scan, bulb, leaf, arrowForward, logoAndroid } from 'ionicons/icons';
     /* Brand Section */
     .hero-brand {
       text-align: center;
+      margin-bottom: 40px;
     }
-    .brand-icon-wrapper {
-      position: relative;
-      width: 100px;
-      height: 100px;
-      margin: 0 auto 24px;
-      display: flex;
-      justify-content: center;
+    .brand-badge {
+      display: inline-flex;
       align-items: center;
+      gap: 6px;
+      background: rgba(255, 193, 7, 0.15);
+      border: 1px solid rgba(255, 193, 7, 0.3);
+      color: #ffc107;
+      padding: 6px 14px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 12px rgba(255, 193, 7, 0.1);
     }
-    .brand-icon-glow {
-      position: absolute;
-      inset: 0;
-      background: conic-gradient(from 180deg at 50% 50%, var(--primary-color) 0deg, var(--secondary-color) 180deg, var(--primary-color) 360deg);
-      border-radius: 30px;
-      filter: blur(20px);
-      opacity: 0.6;
-      animation: spin 4s linear infinite;
-    }
-    @keyframes spin { 100% { transform: rotate(360deg); } }
-    .brand-icon {
-      font-size: 56px;
-      position: relative;
-      z-index: 2;
-      background: #111;
-      width: 100%;
-      height: 100%;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      border-radius: 28px;
-      border: 1px solid rgba(255, 255, 255, 0.1);
-    }
-
     .title {
-      font-size: 48px;
+      font-size: 52px;
       font-weight: 900;
       color: #fff;
-      margin: 0 0 8px;
+      margin: 0 0 16px;
       letter-spacing: -1.5px;
+      line-height: 1.1;
     }
     .title span {
-      color: var(--primary-color);
+      background: linear-gradient(135deg, var(--primary-color), #ffc107);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
     }
     .tagline {
-      font-size: 18px;
+      font-size: 16px;
       color: #a1a1aa;
       margin: 0;
+      line-height: 1.5;
+    }
+
+    /* Showcase Container */
+    .showcase-container {
+      position: relative;
+      width: 100%;
+      height: 240px;
+      margin: 0 0 40px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    .glass-mockup {
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 20px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    }
+    .main-mockup {
+      width: 220px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      animation: floatMain 6s ease-in-out infinite;
+    }
+    .mockup-header {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: var(--primary-color);
+      font-weight: 700;
+    }
+    .mockup-img {
+      width: 100%;
+      height: 100px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.02));
+      position: relative;
+      overflow: hidden;
+    }
+    .mockup-img::after {
+      content: '';
+      position: absolute;
+      top: 0; left: -100%; width: 50%; height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+      animation: scan 2s infinite;
+    }
+    @keyframes scan {
+      100% { left: 200%; }
+    }
+    .result-row {
+      display: flex;
+      justify-content: space-between;
+      color: #fff;
+      font-size: 14px;
+    }
+    .macro-bars {
+      display: flex;
+      gap: 4px;
+      height: 4px;
+      border-radius: 2px;
+      overflow: hidden;
+      margin-top: 4px;
+    }
+    .macro-bar { height: 100%; }
+    .macro-bar.p { background: var(--primary-color); }
+    .macro-bar.c { background: var(--tertiary-color); }
+    .macro-bar.f { background: var(--secondary-color); }
+
+    .floating-mockup {
+      position: absolute;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      animation: floatSide 5s ease-in-out infinite alternate;
+    }
+    .floating-mockup.top-right {
+      top: 20px; right: 0;
+      animation-delay: -2s;
+    }
+    .floating-mockup.bottom-left {
+      bottom: 20px; left: 0;
+      animation-delay: -4s;
+    }
+    .accent-icon {
+      font-size: 24px;
+      color: #ffc107;
+    }
+    .floating-mockup div {
+      display: flex;
+      flex-direction: column;
+    }
+    .floating-mockup strong { color: #fff; font-size: 14px; }
+    .floating-mockup span { color: #a1a1aa; font-size: 11px; }
+
+    @keyframes floatMain {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+    @keyframes floatSide {
+      0% { transform: translateY(0) translateX(0); }
+      100% { transform: translateY(15px) translateX(-5px); }
     }
 
     /* Features Section */
@@ -219,7 +340,7 @@ import { scan, bulb, leaf, arrowForward, logoAndroid } from 'ionicons/icons';
       display: flex;
       flex-direction: column;
       gap: 16px;
-      margin: 30px 0;
+      margin-bottom: 40px;
     }
     .feature-card {
       background: rgba(255, 255, 255, 0.03);
@@ -230,10 +351,8 @@ import { scan, bulb, leaf, arrowForward, logoAndroid } from 'ionicons/icons';
       align-items: center;
       gap: 16px;
       backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
       transition: background 0.3s ease;
-    }
-    .feature-card:active {
-      background: rgba(255, 255, 255, 0.08);
     }
     .icon-box {
       width: 50px;
@@ -243,10 +362,10 @@ import { scan, bulb, leaf, arrowForward, logoAndroid } from 'ionicons/icons';
       justify-content: center;
       align-items: center;
       font-size: 24px;
+      flex-shrink: 0;
     }
     .icon-box.blue { background: rgba(0, 153, 255, 0.1); color: var(--primary-color); }
     .icon-box.pink { background: rgba(255, 64, 129, 0.1); color: var(--secondary-color); }
-    .icon-box.green { background: rgba(0, 230, 118, 0.1); color: var(--tertiary-color); }
     
     .text-box h3 {
       font-size: 16px;
@@ -288,29 +407,20 @@ import { scan, bulb, leaf, arrowForward, logoAndroid } from 'ionicons/icons';
       content: '';
       position: absolute;
       top: 0; left: 0; right: 0; bottom: 0;
-      background: linear-gradient(135deg, rgba(0,153,255,0.2), rgba(255,64,129,0.2));
+      background: linear-gradient(135deg, rgba(0,153,255,0.2), rgba(255,193,7,0.4));
       opacity: 0;
       transition: opacity 0.3s;
     }
-    .start-btn:active {
-      transform: scale(0.96);
-    }
-    .start-btn:active::before {
-      opacity: 1;
-    }
-    .btn-text {
-      position: relative;
-      z-index: 1;
-    }
+    .start-btn:active { transform: scale(0.96); }
+    .start-btn:active::before { opacity: 1; }
+    .btn-text { position: relative; z-index: 1; }
     .start-btn ion-icon {
       position: relative;
       z-index: 1;
       font-size: 22px;
       transition: transform 0.3s;
     }
-    .start-btn:hover ion-icon {
-      transform: translateX(5px);
-    }
+    .start-btn:hover ion-icon { transform: translateX(5px); }
 
     .apk-btn {
       position: relative;
@@ -335,9 +445,7 @@ import { scan, bulb, leaf, arrowForward, logoAndroid } from 'ionicons/icons';
       background: rgba(255, 255, 255, 0.05);
       border-color: rgba(255, 255, 255, 0.4);
     }
-    .apk-btn:active {
-      transform: scale(0.96);
-    }
+    .apk-btn:active { transform: scale(0.96); }
     .apk-btn ion-icon {
       font-size: 24px;
       color: var(--tertiary-color);
@@ -352,19 +460,22 @@ import { scan, bulb, leaf, arrowForward, logoAndroid } from 'ionicons/icons';
 })
 export class LandingComponent implements OnInit {
   private router = inject(Router);
+  private authService = inject(AuthService);
 
   constructor() {
     addIcons({
-      scan,
-      bulb,
-      leaf,
-      'arrow-forward': arrowForward,
-      'logo-android': logoAndroid
+      scan, bulb, leaf, 
+      'arrow-forward': arrowForward, 
+      'logo-android': logoAndroid, 
+      flame, restaurant, fitness, 'arrow-up': arrowUp, 'stats-chart': statsChart, sparkles
     });
   }
 
   ngOnInit() {
-    // Optional: preload heavy routes
+    // REDIRECT si el usuario ya está autenticado
+    if (this.authService.currentUser()) {
+      this.router.navigate(['/tabs/dashboard'], { replaceUrl: true });
+    }
   }
 
   goToLogin() {
@@ -380,4 +491,5 @@ export class LandingComponent implements OnInit {
     this.router.navigate(['/login']);
   }
 }
+
 

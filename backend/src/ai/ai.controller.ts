@@ -26,7 +26,7 @@ export class AiController {
   ) {
     this.rateLimit.assertAllowed(req.user.id);
     return {
-      advice: await this.aiService.getCoachAdvice(body.profile, body.meals)
+      advice: await this.aiService.getCoachAdvice(body.profile, body.meals, body.weeklyHistory)
     };
   }
 

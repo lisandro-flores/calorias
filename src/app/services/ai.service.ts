@@ -39,8 +39,8 @@ export class AiService {
     );
   }
 
-  getCoachAdvice(profile: any, meals: any[]): Observable<{ advice: string }> {
-    return this.http.post<{ advice: string }>(`${this.baseUrl}/coach-advice`, { profile, meals }).pipe(
+  getCoachAdvice(profile: any, meals: any[], weeklyHistory?: any[]): Observable<{ advice: string }> {
+    return this.http.post<{ advice: string }>(`${this.baseUrl}/coach-advice`, { profile, meals, weeklyHistory }).pipe(
       retry({
         count: 2,
         delay: (error: HttpErrorResponse, retryCount: number) => {

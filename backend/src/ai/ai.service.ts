@@ -134,14 +134,20 @@ export class AiService {
   /**
    * Analiza el estado diario del usuario y le da consejos.
    */
-  async getCoachAdvice(profile: any, meals: any[]): Promise<string> {
+  async getCoachAdvice(profile: any, meals: any[], weeklyHistory?: any[]): Promise<string> {
     if (!this.ai) {
       throw new BadRequestException('MISSING_API_KEY');
     }
 
     let prompt = `Perfil del usuario: ${JSON.stringify(profile)}\n`;
     prompt += `Comidas de hoy: ${JSON.stringify(meals)}\n`;
-    prompt += `Por favor, dame un análisis corto y conciso de cómo voy hoy y qué me recomiendas hacer en lo que resta del día.`;
+    
+    if (weeklyHistory && weeklyHistory.length > 0) {
+      prompt += `Historial de los últimos 7 días: ${JSON.stringify(weeklyHistory)}\n`;
+      prompt += `Por favor, analiza mi progreso considerando el historial semanal. Detecta patrones (ej. consistencia, días sin registrar, tendencia calórica o de proteínas). Dame un resumen corto y conciso en formato Markdown (usa **negritas** y listas), destacando lo positivo y dando 1 consejo accionable.`;
+    } else {
+      prompt += `Por favor, dame un análisis corto y conciso en formato Markdown de cómo voy hoy y qué me recomiendas hacer en lo que resta del día.`;
+    }
 
     try {
       const response = await this.ai.models.generateContent({

@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { IonicModule } from '@ionic/angular';
 import { AiService } from '../services/ai.service';
 import { NutritionStateService } from '../services/nutrition-state.service';
+import { marked } from 'marked';
 
 @Component({
   selector: 'app-coach',
@@ -12,18 +13,18 @@ import { NutritionStateService } from '../services/nutrition-state.service';
     <ion-content class="ion-padding">
       <div class="header-section">
         <ion-icon name="bulb-outline" class="huge-icon"></ion-icon>
-        <h2>Asistente de Nutrición</h2>
-        <p>Tu coach analiza tu ingesta del día y te da recomendaciones clave para lograr tu meta.</p>
+        <h2>Coach Proactivo</h2>
+        <p>Analizo tu historial de la última semana para darte insights personalizados.</p>
       </div>
 
       <ion-button expand="block" shape="round" class="analyze-btn" (click)="getAdvice()" [disabled]="isLoading()">
         <span *ngIf="isLoading()">Analizando...</span>
-        <span *ngIf="!isLoading()">Analizar Mi Día <ion-icon name="sparkles"></ion-icon></span>
+        <span *ngIf="!isLoading()">Generar Análisis Semanal <ion-icon name="sparkles"></ion-icon></span>
       </ion-button>
 
-      <div class="advice-card" *ngIf="advice()">
-        <h3>Recomendación del Coach:</h3>
-        <p class="advice-text">{{ advice() }}</p>
+      <div class="advice-card" *ngIf="adviceHtml()">
+        <h3>Análisis y Recomendaciones:</h3>
+        <div class="markdown-content" [innerHTML]="adviceHtml()"></div>
       </div>
 
       <div class="error-msg" *ngIf="errorMsg()">
@@ -45,6 +46,7 @@ import { NutritionStateService } from '../services/nutrition-state.service';
       font-size: 22px;
       font-weight: 700;
       margin-bottom: 10px;
+      color: var(--app-text);
     }
     p {
       color: var(--app-muted);
@@ -71,10 +73,24 @@ import { NutritionStateService } from '../services/nutrition-state.service';
       margin-top: 0;
       margin-bottom: 15px;
     }
-    .advice-text {
+    ::ng-deep .markdown-content {
       color: var(--app-text);
       line-height: 1.6;
-      white-space: pre-wrap;
+      font-size: 15px;
+    }
+    ::ng-deep .markdown-content p {
+      margin-top: 0;
+      margin-bottom: 12px;
+    }
+    ::ng-deep .markdown-content ul, ::ng-deep .markdown-content ol {
+      padding-left: 20px;
+      margin-bottom: 12px;
+    }
+    ::ng-deep .markdown-content li {
+      margin-bottom: 6px;
+    }
+    ::ng-deep .markdown-content strong {
+      color: #fff;
     }
     .error-msg {
       color: #ff4d4f;
@@ -93,20 +109,27 @@ export class CoachComponent {
   private nutritionState = inject(NutritionStateService);
 
   isLoading = signal(false);
-  advice = signal('');
+  adviceHtml = signal('');
   errorMsg = signal('');
 
-  getAdvice() {
+  async getAdvice() {
     this.isLoading.set(true);
-    this.advice.set('');
+    this.adviceHtml.set('');
     this.errorMsg.set('');
 
     const profile = this.nutritionState.userProfile();
     const meals = this.nutritionState.meals();
+    
+    // Get last 7 days of history, excluding today since it's already in 'meals'
+    const today = new Date().toISOString().split('T')[0];
+    const history = this.nutritionState.history()
+      .filter(h => h.date !== today)
+      .slice(-7);
 
-    this.aiService.getCoachAdvice(profile, meals).subscribe({
-      next: (res) => {
-        this.advice.set(res.advice);
+    this.aiService.getCoachAdvice(profile, meals, history).subscribe({
+      next: async (res) => {
+        const html = await marked.parse(res.advice);
+        this.adviceHtml.set(html);
         this.isLoading.set(false);
       },
       error: (err) => {
