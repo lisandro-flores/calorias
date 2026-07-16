@@ -4,6 +4,8 @@ import { IonicModule } from '@ionic/angular';
 import { Router } from '@angular/router';
 import { AuthService } from '../services/auth.service';
 import { environment } from '../../environments/environment';
+import { addIcons } from 'ionicons';
+import { logoAndroid } from 'ionicons/icons';
 
 declare var google: any;
 
@@ -30,7 +32,13 @@ declare var google: any;
             (click)="renderGoogleButton()">
             Volver a iniciar sesión
           </button>
+          
           <div id="googleSignInBtn" class="google-btn"></div>
+          
+          <a href="https://github.com/lisandro-flores/calorias/releases/download/latest/fuelsmart.apk" class="apk-btn">
+            <ion-icon name="logo-android"></ion-icon>
+            <span class="btn-text">Descargar APK (Android)</span>
+          </a>
         </div>
       </div>
     </ion-content>
@@ -49,7 +57,7 @@ declare var google: any;
       background: var(--app-bg);
     }
 
-    /* Ambient Backgrounds (from landing) */
+    /* Ambient Backgrounds */
     .ambient-light {
       position: absolute;
       border-radius: 50%;
@@ -137,6 +145,7 @@ declare var google: any;
     .google-btn {
       display: flex;
       justify-content: center;
+      width: 100%;
     }
     .relogin-btn {
       width: 100%;
@@ -154,8 +163,35 @@ declare var google: any;
     .relogin-btn:active {
       transform: translateY(1px);
     }
-    .relogin-btn:active {
-      transform: translateY(1px);
+    .apk-btn {
+      position: relative;
+      background: transparent;
+      color: #fff;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 100px;
+      height: 48px;
+      width: 100%;
+      font-size: 14px;
+      font-weight: 600;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      text-decoration: none;
+      margin-top: 10px;
+      transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+    .apk-btn:hover {
+      background: rgba(255, 255, 255, 0.05);
+      border-color: rgba(255, 255, 255, 0.4);
+    }
+    .apk-btn:active {
+      transform: scale(0.96);
+    }
+    .apk-btn ion-icon {
+      font-size: 20px;
+      color: #00e676;
     }
   `]
 })
@@ -163,6 +199,10 @@ export class LoginComponent implements OnInit {
   private authService = inject(AuthService);
   private router = inject(Router);
   showReloginButton = false;
+
+  constructor() {
+    addIcons({ 'logo-android': logoAndroid });
+  }
 
   ngOnInit() {
     // If already logged in, go to dashboard

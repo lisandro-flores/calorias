@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">tmp-app</string>
-    <string name="title_activity_main">tmp-app</string>
-    <string name="package_name">io.ionic.starter</string>
-    <string name="custom_url_scheme">io.ionic.starter</string>
+    <string name="app_name">FuelSmart</string>
+    <string name="title_activity_main">FuelSmart</string>
+    <string name="package_name">com.fuelsmart.app</string>
+    <string name="custom_url_scheme">com.fuelsmart.app</string>
 </resources>
