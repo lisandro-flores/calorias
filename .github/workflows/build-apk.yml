@@ -41,12 +41,15 @@ jobs:
         working-directory: android
         run: ./gradlew assembleDebug
 
+      - name: Rename APK
+        run: mv android/app/build/outputs/apk/debug/app-debug.apk android/app/build/outputs/apk/debug/fuelsmart.apk
+
       - name: Upload APK to Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: latest
           name: Latest Build
           prerelease: true
-          files: android/app/build/outputs/apk/debug/app-debug.apk
+          files: android/app/build/outputs/apk/debug/fuelsmart.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
