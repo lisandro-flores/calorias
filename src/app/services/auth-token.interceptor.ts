@@ -15,8 +15,8 @@ export const authTokenInterceptor: HttpInterceptorFn = (req, next) => {
   let request = req;
 
   try {
-    const storedUser = localStorage.getItem('current_user');
-    const token = storedUser ? JSON.parse(storedUser)?.token : null;
+    const user = authService.currentUser();
+    const token = user ? user.token : null;
 
     if (token) {
       request = req.clone({
