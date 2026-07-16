@@ -58,13 +58,13 @@ La app está **lista para uso personal**. Tienes:
 - `src/app/services/nutrition-state.service.ts` — Método `getWeeklySummary()`
 - `backend/src/ai/` — Prompt optimizado con contexto semanal
 
-### Prioridad 3 — Gráficos con Chart.js
+### Prioridad 3 — Gráficos con Chart.js (✅ Completado)
 
 **Qué:** Reemplazar las barras simples de progreso con gráficos interactivos.
 
 **Archivos a tocar:**
-- `src/app/components/progress.component.ts`
-- Instalar `ng2-charts` o `chart.js`
+- `src/app/components/progress.component.ts` (Implementado)
+- Instalar `ng2-charts` o `chart.js` (Implementado)
 
 ### Prioridad 4 — Health Connect en Dispositivo Real
 

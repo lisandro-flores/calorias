@@ -410,7 +410,7 @@ export class ProgressComponent implements AfterViewInit, OnDestroy {
             type: 'bar',
             label: 'Calorías',
             data,
-            backgroundColor: (context) => {
+            backgroundColor: (context: any) => {
               const val = context.raw as number;
               if (val > this.goal()) return 'rgba(248, 113, 113, 0.8)';
               return 'rgba(240, 168, 68, 0.8)';
@@ -429,7 +429,7 @@ export class ProgressComponent implements AfterViewInit, OnDestroy {
             mode: 'index',
             intersect: false,
             callbacks: {
-              label: (context) => \`\${context.dataset.label}: \${context.raw} kcal\`
+              label: (context: any) => `${context.dataset.label}: ${context.raw} kcal`
             }
           }
         },
@@ -469,7 +469,7 @@ export class ProgressComponent implements AfterViewInit, OnDestroy {
         datasets: [{
           label: 'Déficit / Superávit',
           data,
-          backgroundColor: (context) => {
+          backgroundColor: (context: any) => {
             const val = context.raw as number;
             return val > 0 ? '#00e676' : 'rgba(248, 113, 113, 0.8)';
           },
@@ -484,9 +484,9 @@ export class ProgressComponent implements AfterViewInit, OnDestroy {
           legend: { display: false },
           tooltip: {
             callbacks: {
-              label: (context) => {
+              label: (context: any) => {
                 const val = context.raw as number;
-                return val > 0 ? \`Déficit: \${val} kcal\` : \`Superávit: \${Math.abs(val)} kcal\`;
+                return val > 0 ? `Déficit: ${val} kcal` : `Superávit: ${Math.abs(val)} kcal`;
               }
             }
           }
@@ -524,11 +524,11 @@ export class ProgressComponent implements AfterViewInit, OnDestroy {
         datasets: [{
           data,
           backgroundColor: bgColors,
-          borderWidth: 0,
-          cutout: '75%'
+          borderWidth: 0
         }]
       },
       options: {
+        cutout: '75%',
         responsive: true,
         maintainAspectRatio: false,
         plugins: {
@@ -536,7 +536,7 @@ export class ProgressComponent implements AfterViewInit, OnDestroy {
           tooltip: {
             enabled: hasData,
             callbacks: {
-              label: (context) => \` \${context.label}: \${context.raw}g\`
+              label: (context: any) => ` ${context.label}: ${context.raw}g`
             }
           }
         }
